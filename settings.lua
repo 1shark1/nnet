@@ -34,6 +34,7 @@ function Settings()
     startEpoch = 0;
     cms = 100;
     cmsActive = 0;
+    dropout = 1;
     
     trainFile = 'cz-train-new.list';
     validFile = 'cz-valid-new.list';

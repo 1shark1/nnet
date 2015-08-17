@@ -63,14 +63,17 @@ noBatchesTest = (datasetTest:size() - datasetTest:size() % settings.batchSize) /
 
 if settings.startEpoch == 0 then        
   mlp = nn.Sequential();
+  if (settings.borders == 1) then mlp:add(nn.Dropout); end
   mlp:add(initializeLL(settings.inputSize * (settings.seqL + settings.seqR + 1 + settings.cmsActive), settings.noNeurons));
   mlp:add(nn.ReLU());
   
   for i = 1, settings.noHiddenLayers do
+    if (settings.borders == 1) then mlp:add(nn.Dropout); end
     mlp:add(initializeLL(settings.noNeurons, settings.noNeurons));
     mlp:add(nn.ReLU());
   end
   
+  if (settings.borders == 1) then mlp:add(nn.Dropout); end
   ll = nn.Linear(settings.noNeurons, settings.outputSize);  
   ll.weight:zero();
   ll.bias:zero();
@@ -151,6 +154,8 @@ for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
       
   err_mx = 0;
   all = 0;
+
+  mlp_auto:evaluate();
 
   for noBatchValid = 1, noBatchesValid, 1 do
     
