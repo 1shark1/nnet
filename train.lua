@@ -63,17 +63,17 @@ noBatchesTest = (datasetTest:size() - datasetTest:size() % settings.batchSize) /
 
 if settings.startEpoch == 0 then        
   mlp = nn.Sequential();
-  if (settings.dropout == 1) then mlp:add(nn.Dropout); end
+  if (settings.dropout == 1) then mlp:add(nn.Dropout(dropoutThreshold)); end
   mlp:add(initializeLL(settings.inputSize * (settings.seqL + settings.seqR + 1 + settings.cmsActive), settings.noNeurons));
   mlp:add(nn.ReLU());
   
   for i = 1, settings.noHiddenLayers do
-    if (settings.dropout == 1) then mlp:add(nn.Dropout); end
+    if (settings.dropout == 1) then mlp:add(nn.Dropout(dropoutThreshold)); end
     mlp:add(initializeLL(settings.noNeurons, settings.noNeurons));
     mlp:add(nn.ReLU());
   end
   
-  if (settings.dropout == 1) then mlp:add(nn.Dropout); end
+  if (settings.dropout == 1) then mlp:add(nn.Dropout(dropoutThreshold)); end
   ll = nn.Linear(settings.noNeurons, settings.outputSize);  
   ll.weight:zero();
   ll.bias:zero();

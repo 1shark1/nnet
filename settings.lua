@@ -35,6 +35,7 @@ function Settings()
     cms = 100;
     cmsActive = 0;
     dropout = 1;
+    dropoutThreshold = 0.1;
     
     trainFile = 'cz-train-new.list';
     validFile = 'cz-valid-new.list';
