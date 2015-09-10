@@ -6,8 +6,8 @@ function Settings()
     
   local settings = {
     
-    inputSize = 39
     --CZ
+    inputSize = 39
     outputSize = 3886;
     
     --PL
