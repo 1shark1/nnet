@@ -5,7 +5,7 @@ Use settings to configure the network
 
 Inputs: lists (train/valid/test), wav folder, param folder, akulab folder, path is determined from the list
 
-Outputs: set in settings, stats, mod and train folder
+Outputs: set in settings, stats, mod and log folder
 
 LM
 

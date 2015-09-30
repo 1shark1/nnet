@@ -13,7 +13,7 @@ function Settings()
     -- DNN settings
     inputSize = 39;           -- number of input features
     outputSize = 3886;        -- number of output neurons (= align states)
-		--outputSize = 3180;      -- PL
+    --outputSize = 3180;      -- PL
     --outputSize = 2377;      -- SK
     --outputSize = 2183;      -- HR
     --outputSize = 2593;      -- RU 
