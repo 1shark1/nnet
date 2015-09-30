@@ -2,6 +2,11 @@
 require 'torch'
 require 'nn'
 
+-- LM
+
+-- Utils
+
+-- network initialization - literature
 function initializeLL(inputSize, outputSize)
   
   local l = nn.Linear(inputSize, outputSize)
@@ -13,6 +18,7 @@ function initializeLL(inputSize, outputSize)
     
 end
 
+-- export of nnet file
 function exportModel(ifile, ofile)
   
   local mlp = torch.load(ifile);
