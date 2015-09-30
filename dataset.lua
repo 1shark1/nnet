@@ -88,7 +88,7 @@ function Dataset(fname, settings)
       nSamples = nSamples + settings.seqL + settings.seqR;
     end   
     
-    -- save CMS processed data to cache table
+    -- save input data to cache table
     fvec = fvec:view(fvec:size(1) * settings.inputSize);
     table.insert(dataset.cache, {inp = fvec, out = currentOutput});
     
