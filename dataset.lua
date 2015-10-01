@@ -44,8 +44,10 @@ function Dataset(fname, settings)
   -- read data from files
   for line in io.lines(fname) do
     -- read HTK parametrization
-    line = line:gsub(settings.inputPath, settings.mfccPath);
-    local f = torch.DiskFile(line .. settings.mfccExt, "r");
+    if (settings.sameFolder == 0) then
+      line = line:gsub(settings.inputPath, settings.parPath);
+    end
+    local f = torch.DiskFile(line .. settings.parExt, "r");
     f:binary();
     local nSamples = f:readInt();
     local sampPeriod = f:readInt();
@@ -55,7 +57,9 @@ function Dataset(fname, settings)
     f:close();
     
     -- read akulabels
-    line = line:gsub(settings.mfccPath, settings.akuPath);
+    if (settings.sameFolder == 0) then
+      line = line:gsub(settings.parPath, settings.akuPath);
+    end
     f = torch.DiskFile(line .. settings.akuExt, "r");
     f:binary();
     local currentOutput = f:readInt(nSamples);
