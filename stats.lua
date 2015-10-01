@@ -41,14 +41,16 @@ function Stats(fname, settings)
   
   -- read filelist
   for line in io.lines(fname) do
-    line = line:gsub(settings.inputPath, settings.mfccPath);
+    if (settings.sameFolder == 0) then
+      line = line:gsub(settings.inputPath, settings.parPath);
+    end
     table.insert(stats.fileList, line);
   end
   
   -- process param files one by one [HTK format]
   for file = 1, #stats.fileList, 1 do    
     local line = stats.fileList[file] ;
-    local f = torch.DiskFile(line .. settings.mfccExt, 'r');
+    local f = torch.DiskFile(line .. settings.parExt, 'r');
     f:binary();
     -- read HTK header
     local nSamples = f:readInt();
