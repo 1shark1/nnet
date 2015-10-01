@@ -12,7 +12,7 @@ function Settings()
     
     -- DNN settings
     inputSize = 39;           -- number of input features
-    outputSize = 3886;        -- number of output neurons (= align states)
+    outputSize = 3886;        -- number of output neurons (= align states) -- CZ
     --outputSize = 3180;      -- PL
     --outputSize = 2377;      -- SK
     --outputSize = 2183;      -- HR
@@ -36,17 +36,20 @@ function Settings()
     -- cuda on/off
     cuda = 1;                 -- 1 active
     
+    -- ext files in same folder
+    sameFolder = 0;           -- 0 original solution (folders: settings -> input folders); 1 in one directory
+    
     -- input lists    
     trainFile = 'cz-train-new.list';
     validFile = 'cz-valid-new.list';
     testFile = 'cz-test-new.list';
     
-    -- input folders
+    -- input folders (applied only if sameFolder = 0)
     inputPath = "/wav/";
-    mfccPath = "/fbank39/";
+    parPath = "/fbank39/";
     akuPath = "/akulab/";
     -- input extension
-    mfccExt = ".par";
+    parExt = ".par";
     akuExt = ".akulab";
     
     -- output folders
