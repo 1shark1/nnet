@@ -7,13 +7,15 @@ use File::Path qw(make_path);
 	
 print STDERR "Creating labels for file $ARGV[0]\n";
 
+my $sameFolder = 1;
+
 my $inputFolder = "/wav/";
 my $akuFolder = "/akulab/";
 my $mfccFolder="/fbc/";
 my $labelFolder="/rec.mapped/";
 
 my $osuff=".akulab";
-my $datasuff=".fbc";
+my $datasuff=".par";
 my $labsuff=".rec.mapped";
 
 my @classes;
@@ -24,17 +26,23 @@ while(my $label=<HH>)
 {
  chomp($label);
  $label.="$labsuff";
- $label=~s/$inputFolder/$labelFolder/i;
+ if($sameFolder != 1) {
+  $label=~s/$inputFolder/$labelFolder/i;
+ }
  if($label=~/${labsuff}$/i)
   {
     #print "$label\n";
     $file=$label;	
     $file=~s/${labsuff}$/${datasuff}/i;
-		$file=~s/$labelFolder/$mfccFolder/i;
+		if($sameFolder != 1) {
+			$file=~s/$labelFolder/$mfccFolder/i;
+		}
 
     $olabel=$label;
     $olabel=~s/${labsuff}$/${osuff}/i;
-		$olabel=~s/$labelFolder/$akuFolder/i;
+		if($sameFolder != 1) {
+			$olabel=~s/$labelFolder/$akuFolder/i;
+		}
     open(F,$file) or print STDERR "Can't open $file\n";
     binmode F;
     my $p;
