@@ -17,6 +17,12 @@ require 'settings'
 -- initialize settings
 settings = Settings();    
 
+-- load modules for cuda if selected
+if (settings.cuda == 1) then
+  require 'cunn'
+  require 'cutorch'  
+end
+
 -- load appropriate stats & dataset classes
 if (settings.cmsActive == 1) then
   require 'statsFLMSBorders'
@@ -87,9 +93,7 @@ else
 end
 
 -- cuda on/off
-if (settings.cuda == 1) then
-  require 'cunn'
-  require 'cutorch'  
+if (settings.cuda == 1) then 
   mlp:cuda();
   mlp_auto = nn.Sequential();
   mlp_auto:add(nn.Copy('torch.FloatTensor', 'torch.CudaTensor'));
