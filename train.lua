@@ -36,7 +36,7 @@ end
 stats = Stats(settings.trainFile, settings);  
 stats:exportStats();    
 
--- override default stats by computed in settings
+-- override default stats by ones computed on train data
 settings.mean = stats.mean;
 settings.var = stats.var;
 if (settings.cmsActive == 1) then
@@ -82,7 +82,7 @@ if settings.startEpoch == 0 then
   mlp:add(ll);
   mlp:add(nn.LogSoftMax());   -- output layer type
   
--- load epoch to continue train  
+-- load epoch to continue training 
 else
   if paths.filep(settings.outputFolder .. "/mod/" .. settings.startEpoch .. ".mod") then  
     mlp = torch.load(settings.outputFolder .. "/mod/" .. settings.startEpoch .. ".mod");
@@ -112,7 +112,7 @@ local testError = {};
 -- training
 for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
   
-  -- timer per epoch start
+  -- timer per epoch - start
   local etime = sys.clock();   
   
   -- shuffle data
@@ -131,7 +131,7 @@ for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
     local inputs = torch.Tensor(settings.batchSize, settings.inputSize * (settings.seqL + settings.seqR + 1)):zero();
     local targets = torch.Tensor(settings.batchSize):zero();
     
-    -- batch process
+    -- process batches
     for i = 1, settings.batchSize, 1 do
       
       -- pick frame (shuffled)
@@ -152,10 +152,13 @@ for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
 
     -- criterion 
     local criterion = nn.ClassNLLCriterion();
-    mlp_auto:zeroGradParameters();
   
     -- forward propagation
     local pred = mlp_auto:forward(inputs);
+	criterion:forward(pred, targets);
+	
+	-- zero the accumulation of the gradients
+	mlp_auto:zeroGradParameters();
   
     -- back propagation
     local t = criterion:backward(pred, targets);
@@ -191,7 +194,7 @@ for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
     local inputs = torch.Tensor(settings.batchSize, settings.inputSize * (settings.seqL + settings.seqR + 1)):zero();
     local targets = torch.Tensor(settings.batchSize):zero();
     
-    -- batch process
+    -- process batches
     for i = 1, settings.batchSize, 1 do
       -- pick frame and obtain data
       local index = (noBatchValid - 1) * settings.batchSize + i;
@@ -234,7 +237,7 @@ for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
     local inputs = torch.Tensor(settings.batchSize, settings.inputSize * (settings.seqL + settings.seqR + 1)):zero();
     local targets = torch.Tensor(settings.batchSize):zero();
     
-    -- batch process
+    -- process batches
     for i = 1, settings.batchSize, 1 do
       -- pick frame and obtain data
       local index = (noBatchTest - 1) * settings.batchSize + i;
