@@ -155,10 +155,10 @@ for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
   
     -- forward propagation
     local pred = mlp_auto:forward(inputs);
-	criterion:forward(pred, targets);
+    criterion:forward(pred, targets);
 	
-	-- zero the accumulation of the gradients
-	mlp_auto:zeroGradParameters();
+    -- zero the accumulation of the gradients
+    mlp_auto:zeroGradParameters();
   
     -- back propagation
     local t = criterion:backward(pred, targets);
