@@ -1,29 +1,20 @@
 
-require 'torch'
-require 'math'
-require 'xlua'
-require 'logroll'
+-- LM --- Stats
 
--- LM
-
--- Computation of train data stats - mean, std
-
-function Stats(fname, settings)
+function Stats(fname)
   
   -- initialization
-  local stats = {
-    fname = fname;
-    settings = settings;  
-  }
+  local stats = {}
   
   -- logs
   flog = logroll.file_logger(settings.outputFolder .. settings.logFolder .. '/stats.log');
   plog = logroll.print_logger();
   log = logroll.combine(flog, plog);
   
-  -- input file does not exist
+  -- check if filelist exists
   if not paths.filep(fname) then  
-    log.error('File ' .. fname .. ' does not exist!');
+    flog.error('File ' .. fname .. ' does not exist!');
+    error('File ' .. fname .. ' does not exist!');
   end
 
   -- set tensors to float to calculate stats
@@ -34,52 +25,44 @@ function Stats(fname, settings)
   local begin = sys.clock();
   
   -- stats initialization
-  stats.fileList = {};
-  stats.nSamples = 0;
   stats.mean = torch.Tensor(settings.inputSize):zero():double();
   stats.var = torch.Tensor(settings.inputSize):zero():double();
+  stats.nSamples = 0;
   
-  -- read filelist
-  for line in io.lines(fname) do
-    if (settings.sameFolder == 0) then
-      line = line:gsub(settings.inputPath, settings.parPath);
+  -- load filelist
+  local fileList = readFileList(fname);
+  
+  -- process files one by one
+  for file = 1, #fileList, 1 do    
+    
+    local nSamples, sampPeriod, sampSize, parmKind, data, fvec
+    
+    -- read input files
+    if (settings.inputType == "htk") then
+      nSamples, sampPeriod, sampSize, parmKind, data, fvec = readHTK(fileList[file]);
+    else
+      flog.error('Not implemented');
+      error('Not implemented');
     end
-    table.insert(stats.fileList, line);
-  end
-  
-  -- process param files one by one [HTK format]
-  for file = 1, #stats.fileList, 1 do    
-    local line = stats.fileList[file] ;
-    local f = torch.DiskFile(line .. settings.parExt, 'r');
-    f:binary();
-    -- read HTK header
-    local nSamples = f:readInt();
-    local sampPeriod = f:readInt();
-    local sampSize = f:readShort();
-    local parmKind = f:readShort();
-    -- read features
-    local s = f:readFloat(nSamples * sampSize / 4);    
-    f:close();
     
-    -- create tensor from input data
-    local fvec = torch.Tensor(s, 1, torch.LongStorage{nSamples, sampSize / 4});
-    
-    -- clone borders if selected
-    if (settings.borders == 1) then
-      local pre = torch.Tensor(s, 1, torch.LongStorage{1, sampSize / 4});
-      local post = torch.Tensor(s, (fvec:size(1) - 1) * (sampSize / 4) + 1, torch.LongStorage{1, sampSize / 4});   
-      pre = pre:repeatTensor(settings.seqL, 1);
-      post = post:repeatTensor(settings.seqR, 1);   
-      fvec = torch.cat(pre, torch.cat(fvec, post, 1), 1);
+    -- clone borders
+    if (settings.cloneBorders == 1) then
+      fvec = cloneBordersInputs(data, fvec);
       nSamples = nSamples + settings.seqL + settings.seqR;
     end
-        
+  
+    -- compute CMS
+    if (settings.applyCMS == 1) then
+      local cms = applyCMS(fvec, nSamples);
+    end
+
     -- compute global stats
     stats.mean:add(torch.sum(fvec, 1):double());
     stats.var:add(torch.sum(torch.pow(fvec, 2):double(), 1));
-
+    
     -- compute global number of frames
     stats.nSamples = stats.nSamples + fvec:size(1);
+
   end   
 
   -- compute global stats
@@ -93,26 +76,12 @@ function Stats(fname, settings)
   -- log time needed for computation
   log.info('Mean and variance completed in ' .. sys.clock() - begin);
 
-
-  -- export stats to file
+  -- function exporting stats to file
   function stats:exportStats();
 
     local output = settings.outputFolder .. settings.statsFolder;
-    
-    -- mean  
-    local f = torch.DiskFile(output .. '/mean-' .. stats.fname, 'w');
-    for v = 1, stats.mean:size(1), 1 do
-      f:writeFloat(stats.mean[v]);
-    end
-    f:close()
-    
-    -- std
-    f = torch.DiskFile(output .. '/std-' .. stats.fname, 'w');
-    for v = 1, stats.mean:size(1), 1 do
-      f:writeFloat(stats.var[v]);
-    end
-    f:close();
-    
+    saveStat(output .. '/mean.list', stats.mean);
+    saveStat(output .. '/std.list', stats.var);
     log.info('Stats exported in ' .. output .. '/');
     
   end

@@ -1,27 +1,20 @@
 
-require 'torch'
-require 'logroll'
+-- LM --- Datasets
 
--- LM
-
--- Preparation of various datasets for training
-
-function Dataset(fname, settings)
+function Dataset(fname, isFileList, computeFramestats)
   
   -- initialization
-  local dataset = {
-    fname = fname;
-    settings = settings;
-  }
+  local dataset = {}
   
   -- logs
   flog = logroll.file_logger(settings.outputFolder .. settings.logFolder .. '/' .. fname .. '.log');
   plog = logroll.print_logger();
   log = logroll.combine(flog, plog);
   
-  -- input file does not exist
+  -- check if filelist exists
   if not paths.filep(fname) then  
-    log.error('File ' .. fname .. ' does not exist!');
+    flog.error('File ' .. fname .. ' does not exist!');
+    error('File ' .. fname .. ' does not exist!');
   end
   
   -- set tensors to float to handle data
@@ -35,64 +28,86 @@ function Dataset(fname, settings)
   dataset.index = {};
   dataset.nSamplesList = {};
   dataset.cache = {};
-  dataset.nFiles = 0;
   dataset.nSamples = 0;
-  dataset.currentfile = 0;
   
   -- initialize sample count
   local totalSamples = 0;
+  
+  -- load filelist
+  local fileList = {};
+  if(isFileList == 1) then
+    fileList = readFileList(fname);
+  else
+    table.insert(fileList, fname);
+  end
+  
+  -- initialize framestats
+  local framestats = {};
+  if(computeFramestats == 1) then 
+    for i = 1, settings.outputSize, 1 do
+      framestats[i] = 0;
+    end
+  end
+    
   -- read data from files
-  for line in io.lines(fname) do
-    -- read HTK parametrization
-    if (settings.sameFolder == 0) then
-      line = line:gsub(settings.inputPath, settings.parPath);
+  for file = 1, #fileList, 1 do  
+
+    local nSamples, sampPeriod, sampSize, parmKind, data, fvec;
+    
+    -- read input files
+    if (settings.inputType == "htk") then
+      nSamples, sampPeriod, sampSize, parmKind, data, fvec = readHTK(fileList[file]);
+    else
+      flog.error('InputType: not implemented');
+      error('InputType: not implemented');
     end
-    local f = torch.DiskFile(line .. settings.parExt, "r");
-    f:binary();
-    local nSamples = f:readInt();
-    local sampPeriod = f:readInt();
-    local sampSize = f:readShort();
-    local parmKind = f:readShort();
-    local currentInput = f:readFloat(nSamples * sampSize / 4);
-    f:close();
     
-    -- read akulabels
-    if (settings.sameFolder == 0) then
-      line = line:gsub(settings.parPath, settings.akuPath);
+    -- fix for DNN alignment by ntx4
+    if (settings.dnnAlign == 1) then
+      nSamples = nSamples - 1;
     end
-    f = torch.DiskFile(line .. settings.akuExt, "r");
-    f:binary();
-    local currentOutput = f:readInt(nSamples);
-    f:close();
+
+    -- read ref outputs
+    local currentOutput;
+    if (settings.sameFolder == 0) then
+      fileList[file] = fileList[file]:gsub(settings.parPath, settings.refPath);
+    end
     
-    -- create tensor from input data
-    local fvec = torch.Tensor(currentInput, 1, torch.LongStorage{nSamples, sampSize / 4});     
+    if (settings.refType == "akulab") then
+      currentOutput = readAkulab(fileList[file], nSamples);
+    elseif (settings.refType == "rec-mapped") then
+      currentOutput = readRecMapped(fileList[file], nSamples);
+    else
+      flog.error('RefType: not implemented');
+      error('RefType: not implemented');
+    end
     
-    -- clone borders if selected -> inputs & outputs
-    if (settings.borders == 1) then
-      -- inputs
-      local pre = torch.Tensor(currentInput, 1, torch.LongStorage{1, sampSize / 4});
-      local post = torch.Tensor(currentInput, (fvec:size(1) - 1) * (sampSize / 4) + 1, torch.LongStorage{1, sampSize / 4});   
-      pre = pre:repeatTensor(settings.seqL, 1);
-      post = post:repeatTensor(settings.seqR, 1);   
-      fvec = torch.cat(pre, torch.cat(fvec, post, 1), 1);
-      -- outputs
-      local curOut = torch.Tensor(currentOutput:size(1) + settings.seqL + settings.seqR);   
-      for i = 1, settings.seqL, 1 do
-        curOut[i] = currentOutput[1];
-      end  
-      for i = settings.seqL + 1, curOut:size(1) - settings.seqR - settings.seqL, 1 do
-        curOut[i] = currentOutput[i];
-      end  
-      for i = curOut:size(1) - settings.seqR - settings.seqL + 1, curOut:size(1) - settings.seqL, 1 do
-        curOut[i] = currentOutput[currentOutput:size(1)];
-      end    
-      currentOutput = curOut;    
-      -- get samples
+    -- compute framestats
+    if (computeFramestats == 1) then
+      for i = 1, currentOutput:size(1), 1 do
+        framestats[currentOutput[i]+1] = framestats[currentOutput[i]+1] + 1;
+      end
+    end
+    
+    -- sanity check - input/ref sample size
+    if (currentOutput:size(1) ~= nSamples) then
+      flog.error('Nonmatching sample count: ' .. fileList[file]);
+      error('Nonmatching sample count' .. fileList[file]);
+    end
+    
+    -- clone borders
+    if (settings.cloneBorders == 1) then
+      fvec = cloneBordersInputs(data, fvec);
+      currentOutput = cloneBordersRefs(currentOutput);
       nSamples = nSamples + settings.seqL + settings.seqR;
-    end   
-    
-    -- save input data to cache table
+    end
+
+    -- compute CMS
+    if (settings.applyCMS == 1) then
+      local cms = applyCMS(fvec, nSamples);
+    end
+
+    -- save CMS processed data to cache table
     fvec = fvec:view(fvec:size(1) * settings.inputSize);
     table.insert(dataset.cache, {inp = fvec, out = currentOutput});
     
@@ -104,6 +119,13 @@ function Dataset(fname, settings)
     if (nSamples >= 1) then
       totalSamples = totalSamples + nSamples;
     end
+    
+  end
+  
+  -- save framestats
+  if (computeFramestats == 1) then
+    local output = settings.outputFolder .. settings.statsFolder;
+    saveFramestats(output .. '/framestats.list', framestats);
   end
   
   -- prepare tensors for data for training
@@ -115,8 +137,8 @@ function Dataset(fname, settings)
     local nSamples = dataset.nSamplesList[ll];
     if (nSamples >= 1) then     -- sanity check
       i = settings.seqL;
-      dataset.index.file:narrow(1, dataset.nSamples + 1, nSamples):fill(ll);              -- fe [0 0 0 1 1 1 1 1]
-      dataset.index.pos:narrow(1, dataset.nSamples + 1, nSamples):apply(function(x)       -- fe [0 1 2 0 1 2 3 4] + seqL
+      dataset.index.file:narrow(1, dataset.nSamples + 1, nSamples):fill(ll);              -- fe [1 1 1 2 2 2 2 2]
+      dataset.index.pos:narrow(1, dataset.nSamples + 1, nSamples):apply(function(x)       -- fe [1 2 3 1 2 3 4 5] + seqL
         i = i + 1;
         return i;
       end);
@@ -151,7 +173,7 @@ function Dataset(fname, settings)
     
     -- clone the asked data   
     local inp = currentInput[{{startIndex, endIndex}}]:clone();
-    
+
     -- normalize
     inp:add(-mean);
     inp:cdiv(var);  

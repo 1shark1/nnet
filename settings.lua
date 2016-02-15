@@ -1,77 +1,80 @@
 
-require 'torch'
-require 'logroll'
-
--- LM
-
--- Script settings
+-- LM --- Settings
 
 function Settings()
     
-  local settings = {
-    
-    -- DNN settings
-    inputSize = 39;           -- number of input features
-    outputSize = 3886;        -- number of output neurons (= align states) -- CZ
-    --outputSize = 3180;      -- PL
-    --outputSize = 2377;      -- SK
-    --outputSize = 2183;      -- HR
-    --outputSize = 2593;      -- RU 
-    noHiddenLayers = 5;     
-    noNeurons = torch.Tensor({1024, 1024, 768, 768, 512, 512});       -- size: noHiddenLayers + 1
-    noEpochs = 150;
-    batchSize = 1024;
-    learningRate = 0.08;
-    lRDecayActive = 0;        -- 1 active
-    learningRateDecay = 0.1;
-    dropout = 0;              -- 1 active
-    dropoutThreshold = torch.Tensor({0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1});  -- size: number of layers
-    seqL = 5;                 -- number of frames added as input - left
-    seqR = 5;                 -- number of frames added as input - right
-    startEpoch = 0;
-    borders = 0;              -- 1 active   
-    cmsActive = 0;            -- 1 active
-    cms = 100;                -- window for calculation of CMS, only for stats&datasetFLMS
-    
-    -- cuda on/off
-    cuda = 1;                 -- 1 active
-    
-    -- ext files in same folder
-    sameFolder = 0;           -- 0 original solution (folders: settings -> input folders); 1 in one directory
-    
-    -- input lists    
-    trainFile = 'cz-train-new.list';
-    validFile = 'cz-valid-new.list';
-    testFile = 'cz-test-new.list';
-    
-    -- input folders (applied only if sameFolder = 0)
-    inputPath = "/wav/";
-    parPath = "/fbank39/";
-    akuPath = "/akulab/";
-    -- input extension
-    parExt = ".par";
-    akuExt = ".akulab";
-    
-    -- output folders
-    outputFolder = "/data/nnModels/2015-09-29";
-    statsFolder = "/stats";
-    logFolder = "/log";
-    modFolder = "/mod";
+  local settings = {};
+  
+  -- general DNN settings
+  settings.inputSize = 39;
+  settings.outputSize = 3886;
+  settings.noEpochs = 15;
+  settings.startEpoch = 0;
+  settings.batchSize = 1024;
+  settings.seqL = 5;                  -- number of frames added as input - left
+  settings.seqR = 5;                  -- number of frames added as input - right
+  settings.learningRate = 0.08;
+  settings.lrDecayActive = 0;
+  if(settings.lrDecayActive == 1) then
+    settings.lrDecay = 0.1;
+  end  
+  settings.computeStats = 1;
+  if (settings.computeStats == 0) then
+    settings.mean = torch.FloatTensor(settings.inputSize):zero();    
+    settings.var = torch.FloatTensor(settings.inputSize):fill(1);   
+  end
+  settings.exportFramestats = 1;
+  settings.applyCMS = 0;
+  if(settings.applyCMS == 1) then
+    settings.cmsSize = 100;
+  end  
+  settings.cloneBorders = 0;
+  settings.dnnAlign = 0;
+  settings.activationFunction = "relu";      -- relu / tanh / sigmoid
+  
+  -- model based settings
+  settings.model = "classic"      -- classic / residual
+  if (settings.model == "classic") then
+    settings.noHiddenLayers = 5;
+    settings.noNeurons = torch.Tensor({512, 512, 512, 512, 512, 512});        -- size: noHiddenLayers + 1
+    settings.dropout = 0;             
+    if (settings.dropout == 1) then
+      settings.dropoutThreshold = torch.Tensor({0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1});  -- size: number of layers
+    end
+  elseif (settings.model == "residual") then  
+    settings.noHiddenBlocks = 10;
+    settings.blockSize = 2;
+    settings.noNeurons = 512;
+  end
+  
+  -- other settings
+  settings.cuda = 1;
+  settings.shuffle = 1;
+  settings.exportNNET = 1;
+  settings.drawERRs = 1;
+  settings.inputType = "htk";           -- htk /
+  settings.refType = "rec-mapped"       -- akulab / rec-mapped
+  
+  -- path settings
+  settings.sameFolder = 0;    -- 0 original solution (folders: settings -> input folders); 1 in one directory
+  if (settings.sameFolder == 0) then
+    settings.parPath = "/fbank39/";
+    settings.refPath = "/rec.mapped/";
+  end  
+  settings.parExt = ".par";
+  settings.refExt = ".rec.mapped";
+  settings.lists = {'small-train.list', 'small-test.list', 'small-valid.list'};
+  settings.outputFolder = "/data/nnModels/TEST";
+  settings.statsFolder = "/stats/";
+  settings.logFolder = "/log/";
+  settings.modFolder = "/mod/";
 
-  }  
-  
-  -- default global stats
-  settings.mean = torch.Tensor(settings.inputSize):zero();    
-  settings.var = torch.Tensor(settings.inputSize):fill(1);    
-  
   -- log
   flog = logroll.file_logger(settings.outputFolder .. settings.logFolder .. '/settings.log');
   flog.info(settings);
   
   -- create output folders
-  os.execute("mkdir " .. settings.outputFolder);
   os.execute("mkdir " .. settings.outputFolder .. settings.statsFolder);
-  os.execute("mkdir " .. settings.outputFolder .. settings.logFolder);
   os.execute("mkdir " .. settings.outputFolder .. settings.modFolder);
   
   return settings;
