@@ -253,4 +253,3 @@ for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
     end
   end
 end
-

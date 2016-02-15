@@ -39,8 +39,6 @@ function applyCMS(fvec, nSamples)
   
 end  
 
-
-
 -- function cloning borders - inputs
 function cloneBordersInputs(data, fvec) 
   
@@ -55,7 +53,6 @@ function cloneBordersInputs(data, fvec)
   return fvec;
   
 end
-
 
 -- function cloning borders - refs
 function cloneBordersRefs(data, fvec) 

@@ -24,9 +24,6 @@ function readHTK(file)
   
 end
 
-
-
-
 -- function to save stats
 function saveStat(file, stat)
   
@@ -39,9 +36,6 @@ function saveStat(file, stat)
   f:close()
   
 end
-
-
-
 
 -- function loading stats
 function readStat(file)
@@ -83,7 +77,6 @@ function readAkulab(file, nSamples)
   
 end
 
-
 -- function reading rec-mapped
 function readRecMapped(file, nSamples)
   
@@ -104,7 +97,6 @@ function readRecMapped(file, nSamples)
   return refTensor;
   
 end
-
 
 -- function saving framestats
 function saveFramestats(file, stat)
@@ -137,9 +129,6 @@ function loadFramestats(file)
   return framestats;
   
 end
-
-
-
 
 -- function exporting nnet file
 function exportModel(ifile, ofile)
