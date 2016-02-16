@@ -11,8 +11,8 @@ require 'logroll'
 require 'gnuplot'
 
 -- require settings
-if (arg[1]) then
-  assert(require(arg[1]));
+if (arg[1]) then 
+  assert(require(string.gsub(arg[1], ".lua", "")));
 else
   require 'settings'
 end
