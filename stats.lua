@@ -30,7 +30,7 @@ function Stats(fname)
   stats.nSamples = 0;
   
   -- load filelist
-  local fileList = readFileList(fname);
+  local fileList = readFileList(settings.listFolder .. fname);
   
   -- process files one by one
   for file = 1, #fileList, 1 do    

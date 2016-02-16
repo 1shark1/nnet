@@ -36,7 +36,7 @@ function Dataset(fname, isFileList, computeFramestats)
   -- load filelist
   local fileList = {};
   if(isFileList == 1) then
-    fileList = readFileList(fname);
+    fileList = readFileList(settings.listFolder .. fname);
   else
     table.insert(fileList, fname);
   end
