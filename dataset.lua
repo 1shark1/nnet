@@ -12,7 +12,7 @@ function Dataset(fname, isFileList, computeFramestats)
   log = logroll.combine(flog, plog);
   
   -- check if filelist exists
-  if not paths.filep(fname) then  
+  if not paths.filep(settings.listFolder .. fname) then  
     flog.error('File ' .. fname .. ' does not exist!');
     error('File ' .. fname .. ' does not exist!');
   end

@@ -63,6 +63,7 @@ function Settings()
   end  
   settings.parExt = ".par";
   settings.refExt = ".rec.mapped";
+  settings.listFolder = "/home/neurotic/nnet-train/backup/new/"; 
   settings.lists = {'small-train.list', 'small-test.list', 'small-valid.list'};
   settings.outputFolder = "/data/nnModels/TEST";
   settings.statsFolder = "/stats/";

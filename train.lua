@@ -20,6 +20,11 @@ end
 -- initialize settings
 settings = Settings();   
   
+-- add path to scripts
+if (settings.scriptFolder) then  
+  package.path = package.path .. ";" .. settings.scriptFolder .. "?.lua";
+end
+  
 -- require stats if necessary  
 if (settings.computeStats == 1) then
   require 'stats'
