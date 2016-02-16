@@ -11,12 +11,6 @@ function Dataset(fname, isFileList, computeFramestats)
   plog = logroll.print_logger();
   log = logroll.combine(flog, plog);
   
-  -- check if filelist exists
-  if not paths.filep(settings.listFolder .. fname) then  
-    flog.error('File ' .. fname .. ' does not exist!');
-    error('File ' .. fname .. ' does not exist!');
-  end
-  
   -- set tensors to float to handle data
   torch.setdefaulttensortype('torch.FloatTensor');
   

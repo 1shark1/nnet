@@ -4,6 +4,10 @@
 -- function loading HTK param file
 function readHTK(file) 
   
+  if not paths.filep(file .. settings.parExt) then  
+    error('File ' .. file .. settings.parExt .. ' does not exist!');
+  end
+  
   local f = torch.DiskFile(file .. settings.parExt, 'r');
   f:binary();
   
@@ -54,6 +58,10 @@ end
 -- function loading filelist
 function readFileList(fileList)
   
+  if not paths.filep(file) then  
+    error('File ' .. file .. ' does not exist!');
+  end
+  
   local files = {};
   for line in io.lines(fileList) do
     table.insert(files, line);
@@ -67,6 +75,10 @@ end
 -- function reading akulabs
 function readAkulab(file, nSamples)
   
+  if not paths.filep(fileList) then  
+    error('File ' .. fileList .. ' does not exist!');
+  end	
+  
   local f = torch.DiskFile(file .. settings.refExt, 'r');
   
   f:binary();
@@ -79,6 +91,10 @@ end
 
 -- function reading rec-mapped
 function readRecMapped(file, nSamples)
+  
+  if not paths.filep(file .. settings.refExt) then  
+    error('File ' .. file .. settings.refExt .. ' does not exist!');
+  end
   
   local refs = {};
   for line in io.lines(file .. settings.refExt) do
@@ -116,6 +132,10 @@ end
 
 --function loading framestats
 function loadFramestats(file)
+  
+  if not paths.filep(file) then  
+    error('File ' .. file .. ' does not exist!');
+  end
   
   local framestats = {};
   

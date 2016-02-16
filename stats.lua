@@ -10,12 +10,6 @@ function Stats(fname)
   flog = logroll.file_logger(settings.outputFolder .. settings.logFolder .. '/stats.log');
   plog = logroll.print_logger();
   log = logroll.combine(flog, plog);
-  
-  -- check if filelist exists
-  if not paths.filep(settings.listFolder .. fname) then  
-    flog.error('File ' .. fname .. ' does not exist!');
-    error('File ' .. fname .. ' does not exist!');
-  end
 
   -- set tensors to float to calculate stats
   torch.setdefaulttensortype('torch.FloatTensor');
