@@ -88,9 +88,11 @@ function Dataset(fname, isFileList, computeFramestats)
         framestats[currentOutput[i]+1] = framestats[currentOutput[i]+1] + 1;
       end
     end
-    
-    -- sanity check - input/ref sample size
-    if (currentOutput:size(1) ~= nSamples) then
+
+    -- sanity check - input/ref sample size + ntx4 fix
+    if (currentOutput:size(1) == nSamples +1) then
+      currentOutput = currentOutput[{{1, nSamples}}];
+    elseif (currentOutput:size(1) ~= nSamples) then
       flog.error('Nonmatching sample count: ' .. fileList[file]);
       error('Nonmatching sample count' .. fileList[file]);
     end
