@@ -7,15 +7,19 @@ function Dataset(fname, isFileList, computeFramestats)
   local dataset = {}
   
   -- logs
-  flog = logroll.file_logger(settings.outputFolder .. settings.logFolder .. '/' .. fname .. '.log');
-  plog = logroll.print_logger();
-  log = logroll.combine(flog, plog);
-  
+  if (isFileList == 1) then
+    flog = logroll.file_logger(settings.outputFolder .. settings.logFolder .. '/' .. fname .. '.log');
+    plog = logroll.print_logger();
+    log = logroll.combine(flog, plog);
+  end
+    
   -- set tensors to float to handle data
   torch.setdefaulttensortype('torch.FloatTensor');
   
   -- log & timer
-  log.info('Preparing dataset: ' .. fname);
+  if (isFileList == 1) then
+    log.info('Preparing dataset: ' .. fname);
+  end
   local begin = sys.clock();
   
   -- dataset initialization
@@ -45,15 +49,19 @@ function Dataset(fname, isFileList, computeFramestats)
     
   -- read data from files
   for file = 1, #fileList, 1 do  
-
+    
+    -- log
+    if (isFileList == 1) then
+      flog.info('Processing file: ' .. file);
+    end
+    
     local nSamples, sampPeriod, sampSize, parmKind, data, fvec;
     
     -- read input files
     if (settings.inputType == "htk") then
       nSamples, sampPeriod, sampSize, parmKind, data, fvec = readHTK(fileList[file]);
     else
-      flog.error('InputType: not implemented');
-      error('InputType: not implemented');
+      error('InputType: not supported');
     end
     
     -- fix for DNN alignment by ntx4
@@ -72,8 +80,7 @@ function Dataset(fname, isFileList, computeFramestats)
     elseif (settings.refType == "rec-mapped") then
       currentOutput = readRecMapped(fileList[file], nSamples);
     else
-      flog.error('RefType: not implemented');
-      error('RefType: not implemented');
+      error('RefType: not supported');
     end
     
     -- compute framestats
@@ -87,7 +94,6 @@ function Dataset(fname, isFileList, computeFramestats)
     if (currentOutput:size(1) == nSamples +1) then
       currentOutput = currentOutput[{{1, nSamples}}];
     elseif (currentOutput:size(1) ~= nSamples) then
-      flog.error('Nonmatching sample count: ' .. fileList[file]);
       error('Nonmatching sample count' .. fileList[file]);
     end
     
@@ -147,7 +153,9 @@ function Dataset(fname, isFileList, computeFramestats)
   local var = settings.var:repeatTensor(settings.seqL + settings.seqR + 1);
   
   -- log time
-  log.info('Dataset prepared in ' .. sys.clock() - begin);
+  if (isFileList == 1) then
+    log.info('Dataset prepared in ' .. sys.clock() - begin);
+  end
   
   -- return number of samples
   function dataset:size() 
