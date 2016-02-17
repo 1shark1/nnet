@@ -29,14 +29,16 @@ function Stats(fname)
   -- process files one by one
   for file = 1, #fileList, 1 do    
     
+    -- log
+    flog.info('Processing file: ' .. file);
+    
     local nSamples, sampPeriod, sampSize, parmKind, data, fvec
     
     -- read input files
     if (settings.inputType == "htk") then
       nSamples, sampPeriod, sampSize, parmKind, data, fvec = readHTK(fileList[file]);
     else
-      flog.error('Not implemented');
-      error('Not implemented');
+      error('InputType: not supported');
     end
     
     -- clone borders
