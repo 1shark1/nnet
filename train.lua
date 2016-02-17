@@ -84,14 +84,13 @@ if (settings.startEpoch == 0) then
   elseif (settings.model == "residual") then
     model = buildResidualModel();
   else
-    flog.error('Not implemented');
-    error('Not implemented');
+    error('Model: not supported');
   end
 -- load epoch to continue training 
 else
   if paths.filep(settings.outputFolder .. settings.modFolder .. settings.startEpoch .. ".mod") then  
     model = torch.load(settings.outputFolder .. settings.modFolder .. settings.startEpoch .. ".mod");
-    log.info('Epoch  ' .. settings.startEpoch .. ' loaded');
+    log.info('Epoch ' .. settings.startEpoch .. ' loaded');
   else
     log.error('Epoch ' .. settings.startEpoch .. ".mod" .. ' does not exist!');
   end
