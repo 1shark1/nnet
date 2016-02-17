@@ -72,3 +72,22 @@ function cloneBordersRefs(data, fvec)
   return curOut;   
   
 end
+
+-- function applying framestats inputs -/+ (ln(framestats) / ln(count))
+function applyFramestats(inputs, framestats, count, operation)
+  
+  framestats:log();
+  framestats = framestats:repeatTensor(inputs:size(1), 1);
+  count = math.log(count);
+  
+  if (operation == 0) then
+    inputs = inputs - (framestats / count);
+  elseif (operation == 1) then 
+    inputs = inputs + (framestats / count);
+  else
+    error('Operation: not supported');
+  end
+  
+  return inputs;
+  
+end
