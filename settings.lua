@@ -1,7 +1,7 @@
 
 -- LM --- Settings
 
-function Settings()
+function Settings(decode)
     
   local settings = {};
   
@@ -65,18 +65,37 @@ function Settings()
   settings.refExt = ".rec.mapped";
   settings.listFolder = "/home/neurotic/nnet-train/backup/new/"; 
   settings.lists = {'small-train.list', 'small-test.list', 'small-valid.list'};
-  settings.outputFolder = "/data/nnModels/TEST";
+  settings.modelName = "newTest"
+  settings.outputFolder = "/data/nnModels/" .. settings.modelName;
   settings.statsFolder = "/stats/";
   settings.logFolder = "/log/";
   settings.modFolder = "/mod/";
+  settings.logPath = "settings.log";
+
+  -- decode settings 
+  if (decode) then
+    -- main decode settings
+    settings.decodeFile = 'small-decode.list';
+    settings.decodeFolder = '/decoded/';
+    settings.decodeType = 'lkl'           -- lkl / txt
+    settings.startEpoch = 5;
+    settings.applyFramestats = 0;
+    if (settings.applyFramestats == 1) then
+      settings.applyFramestatsType = 0;     -- 0 (-) / 1 (+)
+    end
+    
+    -- other decode settings
+    settings.logPath = "decode.log";
+    os.execute("mkdir -p " .. settings.outputFolder .. settings.decodeFolder);
+  end
 
   -- log
-  flog = logroll.file_logger(settings.outputFolder .. settings.logFolder .. '/settings.log');
+  flog = logroll.file_logger(settings.outputFolder .. settings.logFolder .. settings.logPath);
   flog.info(settings);
   
   -- create output folders
-  os.execute("mkdir " .. settings.outputFolder .. settings.statsFolder);
-  os.execute("mkdir " .. settings.outputFolder .. settings.modFolder);
+  os.execute("mkdir -p " .. settings.outputFolder .. settings.statsFolder);
+  os.execute("mkdir -p " .. settings.outputFolder .. settings.modFolder);
   
   return settings;
     
