@@ -28,6 +28,16 @@ function readHTK(file)
   
 end
 
+-- function saving HTK header
+function saveHTKHeader(file, setSize)
+  
+  ff:writeInt(setSize);
+  ff:writeInt(100000);
+  ff:writeShort(settings.outputSize * 4);
+  ff:writeShort(9);
+  
+end
+
 -- function to save stats
 function saveStat(file, stat)
   
@@ -48,6 +58,7 @@ function readStat(file)
   
   local f = torch.DiskFile(file, 'r');
   local stat = f:readFloat(settings.inputSize);
+  stat = torch.Tensor(stat, 1, torch.LongStorage{settings.inputSize});
   
   torch.setdefaulttensortype('torch.DoubleTensor');
   
@@ -58,7 +69,7 @@ end
 -- function loading filelist
 function readFileList(fileList)
   
-  if not paths.filep(file) then  
+  if not paths.filep(fileList) then  
     error('File ' .. file .. ' does not exist!');
   end
   
@@ -138,15 +149,21 @@ function loadFramestats(file)
   end
   
   local framestats = {};
+  local count;
   
   local counter = 1;
   for line in io.lines(file) do
     local splitters = split(line, " ");
     framestats[counter] = splitters[2];
     counter = counter + 1;
+    if not (splitters[2]) then
+      count = line;
+    end
   end
+
+  framestats = torch.FloatTensor(framestats);
   
-  return framestats;
+  return framestats, count;
   
 end
 
