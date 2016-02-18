@@ -50,7 +50,7 @@ if (settings.computeStats == 1) then
 end
 
 -- load framestats
-if (settings.applyFramestats) then
+if (settings.applyFramestats == 1) then
   framestats, count = loadFramestats(settings.outputFolder .. settings.statsFolder .. '/framestats.list');
 end
 
