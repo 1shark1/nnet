@@ -1,13 +1,13 @@
 
 -- LM --- Datasets
 
-function Dataset(fname, isFileList, computeFramestats)
+function Dataset(fname, isFileList, decode, computeFramestats)
   
   -- initialization
   local dataset = {}
   
   -- logs
-  if (isFileList == 1) then
+  if (decode == 0) then
     flog = logroll.file_logger(settings.outputFolder .. settings.logFolder .. '/' .. fname .. '.log');
     plog = logroll.print_logger();
     log = logroll.combine(flog, plog);
@@ -17,7 +17,7 @@ function Dataset(fname, isFileList, computeFramestats)
   torch.setdefaulttensortype('torch.FloatTensor');
   
   -- log & timer
-  if (isFileList == 1) then
+  if (decode == 0) then
     log.info('Preparing dataset: ' .. fname);
   end
   local begin = sys.clock();
@@ -33,7 +33,7 @@ function Dataset(fname, isFileList, computeFramestats)
   
   -- load filelist
   local fileList = {};
-  if(isFileList == 1) then
+  if (isFileList == 1) then
     fileList = readFileList(settings.listFolder .. fname);
   else
     table.insert(fileList, fname);
@@ -41,9 +41,11 @@ function Dataset(fname, isFileList, computeFramestats)
   
   -- initialize framestats
   local framestats = {};
-  if(computeFramestats == 1) then 
-    for i = 1, settings.outputSize, 1 do
-      framestats[i] = 0;
+  if (decode == 0) then 
+    if (computeFramestats == 1) then 
+      for i = 1, settings.outputSize, 1 do
+        framestats[i] = 0;
+      end
     end
   end
     
@@ -51,7 +53,7 @@ function Dataset(fname, isFileList, computeFramestats)
   for file = 1, #fileList, 1 do  
     
     -- log
-    if (isFileList == 1) then
+    if (decode == 0) then
       flog.info('Processing file: ' .. file);
     end
     
@@ -71,36 +73,40 @@ function Dataset(fname, isFileList, computeFramestats)
 
     -- read ref outputs
     local currentOutput;
-    if (settings.sameFolder == 0) then
-      fileList[file] = fileList[file]:gsub(settings.parPath, settings.refPath);
-    end
-    
-    if (settings.refType == "akulab") then
-      currentOutput = readAkulab(fileList[file], nSamples);
-    elseif (settings.refType == "rec-mapped") then
-      currentOutput = readRecMapped(fileList[file], nSamples);
-    else
-      error('RefType: not supported');
-    end
-    
-    -- compute framestats
-    if (computeFramestats == 1) then
-      for i = 1, currentOutput:size(1), 1 do
-        framestats[currentOutput[i]+1] = framestats[currentOutput[i]+1] + 1;
+    if (decode == 0) then 
+      if (settings.sameFolder == 0) then
+        fileList[file] = fileList[file]:gsub(settings.parPath, settings.refPath);
       end
-    end
+      
+      if (settings.refType == "akulab") then
+        currentOutput = readAkulab(fileList[file], nSamples);
+      elseif (settings.refType == "rec-mapped") then
+        currentOutput = readRecMapped(fileList[file], nSamples);
+      else
+        error('RefType: not supported');
+      end
+      
+      -- compute framestats
+      if (computeFramestats == 1) then
+        for i = 1, currentOutput:size(1), 1 do
+          framestats[currentOutput[i]+1] = framestats[currentOutput[i]+1] + 1;
+        end
+      end
 
-    -- sanity check - input/ref sample size + ntx4 fix
-    if (currentOutput:size(1) == nSamples +1) then
-      currentOutput = currentOutput[{{1, nSamples}}];
-    elseif (currentOutput:size(1) ~= nSamples) then
-      error('Nonmatching sample count' .. fileList[file]);
+      -- sanity check - input/ref sample size + ntx4 fix
+      if (currentOutput:size(1) == nSamples +1) then
+        currentOutput = currentOutput[{{1, nSamples}}];
+      elseif (currentOutput:size(1) ~= nSamples) then
+        error('Nonmatching sample count' .. fileList[file]);
+      end
     end
     
     -- clone borders
     if (settings.cloneBorders == 1) then
       fvec = cloneBordersInputs(data, fvec);
-      currentOutput = cloneBordersRefs(currentOutput);
+      if (decode == 0) then 
+        currentOutput = cloneBordersRefs(currentOutput);
+      end
       nSamples = nSamples + settings.seqL + settings.seqR;
     end
 
@@ -125,9 +131,11 @@ function Dataset(fname, isFileList, computeFramestats)
   end
   
   -- save framestats
-  if (computeFramestats == 1) then
-    local output = settings.outputFolder .. settings.statsFolder;
-    saveFramestats(output .. '/framestats.list', framestats);
+  if (decode == 0) then 
+    if (computeFramestats == 1) then
+      local output = settings.outputFolder .. settings.statsFolder;
+      saveFramestats(output .. '/framestats.list', framestats);
+    end
   end
   
   -- prepare tensors for data for training
@@ -153,7 +161,7 @@ function Dataset(fname, isFileList, computeFramestats)
   local var = settings.var:repeatTensor(settings.seqL + settings.seqR + 1);
   
   -- log time
-  if (isFileList == 1) then
+  if (decode == 0) then
     log.info('Dataset prepared in ' .. sys.clock() - begin);
   end
   
@@ -183,7 +191,10 @@ function Dataset(fname, isFileList, computeFramestats)
     inp:cdiv(var);  
     
     -- prepare the output
-    local out = (currentOutput[dataset.index.pos[i]] + 1);
+    local out;
+    if (decode == 0) then
+      out = (currentOutput[dataset.index.pos[i]] + 1);
+    end
     
     -- return the asked data
     return {inp = inp, out = out};

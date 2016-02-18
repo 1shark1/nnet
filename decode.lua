@@ -73,15 +73,15 @@ log = logroll.combine(flog, plog);
 -- evaluation mode
 modelC:evaluate()
 
-if not paths.filep(settings.decodeFile) then  
-  error('File ' .. settings.decodeFile .. ' does not exist!');
+if not paths.filep(settings.listFolder .. settings.decodeFile) then  
+  error('File ' .. settings.listFolder .. settings.decodeFile .. ' does not exist!');
 end
 
 -- decode per file
-for line in io.lines(settings.decodeFile) do
+for line in io.lines(settings.listFolder .. settings.decodeFile) do
 
   -- prepare datasets
-  dataset = Dataset(line, settings); 
+  dataset = Dataset(line, 0, 1, 0); 
   log.info("Decoding file: " .. line .. " type: " .. settings.decodeType);
   
   -- compute number of batches

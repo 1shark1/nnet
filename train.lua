@@ -54,9 +54,9 @@ end
 -- prepare train dataset
 sets = {};
 if (settings.exportFramestats == 1) then
-  table.insert(sets, Dataset(settings.lists[1], 1, settings.exportFramestats));
+  table.insert(sets, Dataset(settings.lists[1], 1, 0, settings.exportFramestats));
 else
-  table.insert(sets, Dataset(settings.lists[1], 1, 0));
+  table.insert(sets, Dataset(settings.lists[1], 1, 0, 0));
 end
 
 -- prepare other sets for validation/testing
