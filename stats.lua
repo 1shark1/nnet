@@ -30,7 +30,7 @@ function Stats(fname)
   for file = 1, #fileList, 1 do    
     
     -- log
-    flog.info('Processing file: ' .. file);
+    flog.info('Processing file: ' .. fileList[file]);
     
     local nSamples, sampPeriod, sampSize, parmKind, data, fvec
     

@@ -54,7 +54,7 @@ function Dataset(fname, isFileList, decode, computeFramestats)
     
     -- log
     if (decode == 0) then
-      flog.info('Processing file: ' .. file);
+      flog.info('Processing file: ' .. fileList[file]);
     end
     
     local nSamples, sampPeriod, sampSize, parmKind, data, fvec;
