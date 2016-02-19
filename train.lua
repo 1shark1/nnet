@@ -60,7 +60,7 @@ else
 end
 
 -- prepare other sets for validation/testing
-if (#settings.lists > 0) then
+if (#settings.lists > 1) then
   for i = 2, #settings.lists, 1 do
     table.insert(sets, Dataset(settings.lists[i], 1, 0));
   end
@@ -110,7 +110,7 @@ else
 end
 
 -- set structure for evaluation
-if (#settings.lists > 0) then
+if (#settings.lists > 1) then
   errorTable = {};
   for i = 2, #settings.lists, 1 do
     table.insert(errorTable, {});
