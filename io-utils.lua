@@ -86,8 +86,8 @@ end
 -- function reading akulabs
 function readAkulab(file, nSamples)
   
-  if not paths.filep(file) then  
-    error('File ' .. file .. ' does not exist!');
+  if not paths.filep(file .. settings.refExt) then  
+    error('File ' .. file .. settings.refExt .. ' does not exist!');
   end	
   
   local f = torch.DiskFile(file .. settings.refExt, 'r');
