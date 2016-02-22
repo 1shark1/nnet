@@ -81,9 +81,9 @@ function applyFramestats(inputs, framestats, count, operation)
   count = math.log(count);
   
   if (operation == 0) then
-    inputs = inputs - (framestats / count);
+    inputs = inputs - (framestats - count);
   elseif (operation == 1) then 
-    inputs = inputs + (framestats / count);
+    inputs = inputs + (framestats - count);
   else
     error('Operation: not supported');
   end
