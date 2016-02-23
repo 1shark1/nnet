@@ -31,10 +31,10 @@ end
 -- function saving HTK header
 function saveHTKHeader(file, setSize)
   
-  ff:writeInt(setSize);
-  ff:writeInt(100000);
-  ff:writeShort(settings.outputSize * 4);
-  ff:writeShort(9);
+  file:writeInt(setSize);
+  file:writeInt(100000);
+  file:writeShort(settings.outputSize * 4);
+  file:writeShort(9);
   
 end
 
@@ -53,6 +53,10 @@ end
 
 -- function loading stats
 function readStat(file)
+  
+  if not paths.filep(file) then  
+    error('File ' .. file .. ' does not exist!');
+  end
 
   torch.setdefaulttensortype('torch.FloatTensor');
   
@@ -70,11 +74,12 @@ end
 function readFileList(fileList)
   
   if not paths.filep(fileList) then  
-    error('File ' .. file .. ' does not exist!');
+    error('File ' .. fileList .. ' does not exist!');
   end
   
   local files = {};
   for line in io.lines(fileList) do
+    line = string.gsub(line, "%s+", "");
     table.insert(files, line);
   end
   

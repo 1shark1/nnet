@@ -79,6 +79,9 @@ end
 
 -- decode per file
 for line in io.lines(settings.listFolder .. settings.decodeFile) do
+  
+  -- strip endline chars
+  line = string.gsub(line, "%s+", "");
 
   -- prepare datasets
   dataset = Dataset(line, 0, 1, 0); 
