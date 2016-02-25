@@ -35,7 +35,9 @@ function Stats(fname)
     local nSamples, sampPeriod, sampSize, parmKind, data, fvec
     
     -- read input files
-    if (settings.inputType == "htk") then
+    if (settings.inputView == 1) then
+      nSamples, sampPeriod, sampSize, parmKind, data, fvec = readView(fileList[file], 0);
+    elseif (settings.inputType == "htk") then
       nSamples, sampPeriod, sampSize, parmKind, data, fvec = readHTK(fileList[file]);
     else
       error('InputType: not supported');

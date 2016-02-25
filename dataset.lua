@@ -57,10 +57,12 @@ function Dataset(fname, isFileList, decode, computeFramestats)
       flog.info('Processing file: ' .. fileList[file]);
     end
     
-    local nSamples, sampPeriod, sampSize, parmKind, data, fvec;
+    local nSamples, sampPeriod, sampSize, parmKind, data, fvec, viewOut;
     
     -- read input files
-    if (settings.inputType == "htk") then
+    if (settings.inputView == 1) then
+      nSamples, sampPeriod, sampSize, parmKind, data, fvec, viewOut = readView(fileList[file], 1);
+    elseif (settings.inputType == "htk") then
       nSamples, sampPeriod, sampSize, parmKind, data, fvec = readHTK(fileList[file]);
     else
       error('InputType: not supported');
@@ -78,7 +80,9 @@ function Dataset(fname, isFileList, decode, computeFramestats)
         fileList[file] = fileList[file]:gsub(settings.parPath, settings.refPath);
       end
       
-      if (settings.refType == "akulab") then
+      if (settings.inputView == 1) then
+        currentOutput = viewOut;       
+      elseif (settings.refType == "akulab") then
         currentOutput = readAkulab(fileList[file], nSamples);
       elseif (settings.refType == "rec-mapped") then
         currentOutput = readRecMapped(fileList[file], nSamples);

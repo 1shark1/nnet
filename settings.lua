@@ -52,6 +52,7 @@ function Settings(decode)
   settings.shuffle = 1;
   settings.exportNNET = 1;
   settings.drawERRs = 1;
+  settings.inputView = 1;               -- filetype: view; for context data
   settings.inputType = "htk";           -- htk /
   settings.refType = "rec-mapped"       -- akulab / rec-mapped
   
