@@ -71,10 +71,13 @@ flog = logroll.file_logger(settings.outputFolder .. settings.logFolder .. '/trai
 plog = logroll.print_logger();
 log = logroll.combine(flog, plog);
 
--- compute number of batches per sets
+-- compute number of batches per sets (validation sets to evaluate all frames)
 noBatches = {};
-for i = 1, #sets, 1 do
-  table.insert(noBatches, (sets[i]:size() - sets[i]:size() % settings.batchSize) / settings.batchSize);
+table.insert(noBatches, (sets[1]:size() - sets[1]:size() % settings.batchSize) / settings.batchSize);
+if (#settings.lists > 1) then
+  for i = 2, #sets, 1 do
+    table.insert(noBatches, math.ceil(sets[i]:size() / settings.batchSize));
+  end
 end
 
 -- initialize the network
@@ -196,33 +199,40 @@ for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
   modelC:evaluate();
 
   plog.info("Testing epoch: " .. epoch .. "/" .. settings.noEpochs);
-  if (#settings.lists > 0) then   
+  if (#settings.lists > 1) then   
     for i = 2, #settings.lists, 1 do
       
       err_mx = 0;
       all = 0;    
+      
       for j = 1, noBatches[i], 1 do
         
+        -- last batch fix
+        batchSize = settings.batchSize;
+        
+        if (j == noBatches[i]) then
+          batchSize = sets[i]:size() - ((noBatches[i]-1) * settings.batchSize);
+        end
+
         -- prepare inputs & outputs tensors 
-        local inputs = torch.Tensor(settings.batchSize, settings.inputSize * (settings.seqL + settings.seqR + 1)):zero();
-        local targets = torch.Tensor(settings.batchSize):zero();
+        local inputs = torch.Tensor(batchSize, settings.inputSize * (settings.seqL + settings.seqR + 1)):zero();
+        local targets = torch.Tensor(batchSize):zero();
         
         -- process batches
-        for k = 1, settings.batchSize, 1 do
+        for k = 1, batchSize, 1 do
           -- pick frame and obtain data
-          local index = (noBatches[i] - 1) * settings.batchSize + k;
+          local index = (j - 1) * settings.batchSize + k;
           ret = sets[i]:get(index);
           inputs[k] = ret.inp;
           targets[k] = ret.out;
         end
-        
+
         -- forward pass
         local outputs = modelC:forward(inputs); 
         
         -- frame error evaluation
-        for k = 1, settings.batchSize, 1 do
-          _, mx = outputs[k]:max(1);
-
+        for k = 1, batchSize, 1 do
+          _, mx = outputs[k]:max(1);   
           if (mx:squeeze() ~= targets[k]) then
             err_mx = err_mx + 1;
           end

@@ -88,7 +88,7 @@ for line in io.lines(settings.listFolder .. settings.decodeFile) do
   log.info("Decoding file: " .. line .. " type: " .. settings.decodeType);
   
   -- compute number of batches
-  noBatches = (dataset:size() - dataset:size() % settings.batchSize) / settings.batchSize;
+  noBatches = math.ceil(dataset:size() / settings.batchSize);
   
   -- prepare output file
   folders = split(line, "/");
@@ -107,14 +107,14 @@ for line in io.lines(settings.listFolder .. settings.decodeFile) do
   end
   
   -- process batches
-  for noBatch = 1, noBatches + 1, 1 do
+  for noBatch = 1, noBatches, 1 do
     
     -- last batch fix
     batchSize = settings.batchSize;
-    if (noBatch == noBatches + 1) then
-      batchSize = dataset:size() - (noBatches * settings.batchSize);
+    if (noBatch == noBatches) then
+      batchSize = dataset:size() - ((noBatches-1) * settings.batchSize);
     end
-    
+
     -- prepare input tensor
     local inputs = torch.Tensor(batchSize, settings.inputSize * (settings.seqL + settings.seqR + 1)):zero();
     
