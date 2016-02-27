@@ -76,14 +76,14 @@ end
 -- function applying framestats inputs -/+ (ln(framestats) / ln(count))
 function applyFramestats(inputs, framestats, count, operation)
   
-  framestats:log();
-  framestats = framestats:repeatTensor(inputs:size(1), 1);
-  count = math.log(count);
+  local fstats = framestats:clone();
+
+  fstats = framestats:repeatTensor(inputs:size(1), 1);
   
   if (operation == 0) then
-    inputs = inputs - (framestats - count);
+    inputs = inputs - (fstats / count):log();
   elseif (operation == 1) then 
-    inputs = inputs + (framestats - count);
+    inputs = inputs + (fstats / count):log();
   else
     error('Operation: not supported');
   end
