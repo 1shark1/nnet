@@ -81,19 +81,21 @@ function Dataset(fname, isFileList, decode, computeFramestats)
       end
       
       if (settings.inputView == 1) then
-        currentOutput = viewOut;       
+        currentOutput = viewOut;    
       elseif (settings.refType == "akulab") then
         currentOutput = readAkulab(fileList[file], nSamples);
       elseif (settings.refType == "rec-mapped") then
         currentOutput = readRecMapped(fileList[file], nSamples);
       else
         error('RefType: not supported');
-      end
+      end    
       
       -- compute framestats
       if (computeFramestats == 1) then
         for i = 1, currentOutput:size(1), 1 do
-          framestats[currentOutput[i]+1] = framestats[currentOutput[i]+1] + 1;
+          if(currentOutput[i] < settings.outputSize) then
+            framestats[currentOutput[i]+1] = framestats[currentOutput[i]+1] + 1;
+          end
         end
       end
 
@@ -116,7 +118,11 @@ function Dataset(fname, isFileList, decode, computeFramestats)
 
     -- compute CMS
     if (settings.applyCMS == 1) then
-      local cms = applyCMS(fvec, nSamples);
+      if (settings.dnnAlign == 1) then
+        local cms = applyCMS(fvec, nSamples+1);
+      else
+        local cms = applyCMS(fvec, nSamples);
+      end
     end
 
     -- save CMS processed data to cache table
