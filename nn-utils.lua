@@ -54,6 +54,34 @@ function buildFFModel()
   
 end
 
+-- create classic feed forward model with batch normalization
+function buildFFBatchModel()
+  
+  -- input layer
+  model = nn.Sequential();
+  
+  model:add(nn.Linear(settings.inputSize * (settings.seqL + settings.seqR + 1), settings.noNeurons[1]));   -- layer size
+  model:add(nn.BatchNormalization(settings.noNeurons[1]));
+  model:add(getAF());   -- layer type
+  
+  -- hidden layers
+  for i = 1, settings.noHiddenLayers do
+    model:add(nn.Linear(settings.noNeurons[i], settings.noNeurons[i+1]));    -- layer size
+    model:add(nn.BatchNormalization(settings.noNeurons[i+1]));
+    model:add(getAF());   -- layer type
+  end
+  
+  -- output layer
+  ll = nn.Linear(settings.noNeurons[settings.noHiddenLayers+1], settings.outputSize);   -- layer size
+  ll.weight:zero();   -- default weights
+  ll.bias:zero();     -- default bias
+  model:add(ll);
+  model:add(nn.LogSoftMax());   -- output layer type
+  
+  return model;
+  
+end
+
 -- create residual model
 function buildResidualModel()
   
