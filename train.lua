@@ -86,6 +86,8 @@ if (settings.startEpoch == 0) then
     model = buildFFModel();
   elseif (settings.model == "residual") then
     model = buildResidualModel();
+  elseif (settings.model == "batch") then
+    model = buildFFBatchModel();
   else
     error('Model: not supported');
   end
