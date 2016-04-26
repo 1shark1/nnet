@@ -145,6 +145,7 @@ function Dataset(fname, isFileList, decode, computeFramestats)
     if (computeFramestats == 1) then
       local output = settings.outputFolder .. settings.statsFolder;
       saveFramestats(output .. '/framestats.list', framestats);
+      saveFramestatsV4(output .. '/framestatsV4.list', framestats);
     end
   end
   
