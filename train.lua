@@ -24,32 +24,24 @@ settings = Settings();
 if (settings.scriptFolder) then  
   package.path = package.path .. ";" .. settings.scriptFolder .. "?.lua";
 end
-  
--- require stats if necessary  
-if (settings.computeStats == 1) then
-  require 'stats'
-end
 
 -- program requires
-require 'dataset'
 require 'utils'
 require 'io-utils'
 require 'set-utils'
 require 'nn-utils'
 
--- load modules for cuda if selected
-if (settings.cuda == 1) then
-  require 'cunn'
-  require 'cutorch'  
-end
-
 -- compute and export stats on train set
 if (settings.computeStats == 1) then
+  require 'stats'
   stats = Stats(settings.lists[1]);  
   stats:exportStats();    
   settings.mean = stats.mean;
   settings.var = stats.var;
 end
+
+-- program requires
+require 'dataset'
 
 -- prepare train dataset
 sets = {};
@@ -78,6 +70,12 @@ if (#settings.lists > 1) then
   for i = 2, #sets, 1 do
     table.insert(noBatches, math.ceil(sets[i]:size() / settings.batchSize));
   end
+end
+
+-- require cuda
+if (settings.cuda == 1) then 
+  require 'cunn'
+  require 'cutorch' 
 end
 
 -- initialize the network
