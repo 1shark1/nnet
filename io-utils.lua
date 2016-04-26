@@ -66,10 +66,9 @@ function readView(file, prepareOutputs)
     end
     
   end  
-    
+  
   -- prepare outputs
   if (prepareOutputs == 1) then
-
     local typeD = tonumber(line[1]);
       
     viewOut = torch.Tensor(fvec:size(1)):zero(); 
@@ -126,6 +125,7 @@ function saveHTKHeader(file, setSize)
   file:writeInt(setSize);
   file:writeInt(100000);
   file:writeShort(settings.outputSize * 4);
+  --file:writeShort(settings.inputSize * 4);
   file:writeShort(9);
   
 end
@@ -244,6 +244,27 @@ function saveFramestats(file, stat)
     count = count + stat[v];
   end
   io.write(count, "\n");
+  io.flush();
+  io.close();
+
+end
+
+-- function saving framestats for ntx4
+function saveFramestatsV4(file, stat)
+
+  io.output(file);
+  
+  local totalCount = 0;
+  for v = 1, #stat, 1 do
+    totalCount = totalCount + stat[v];
+  end
+  
+  local value;
+  for v = 1, #stat, 1 do
+    value = math.log(stat[v] / totalCount);
+    io.write(value, "\n");
+  end
+  
   io.flush();
   io.close();
 
