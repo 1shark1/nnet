@@ -60,13 +60,21 @@ function buildFFBatchModel()
   -- input layer
   model = nn.Sequential();
   
-  model:add(nn.Linear(settings.inputSize * (settings.seqL + settings.seqR + 1), settings.noNeurons[1]));   -- layer size
+  if (settings.batchInit == 1) then
+    model:add(nn.Linear(settings.inputSize * (settings.seqL + settings.seqR + 1), settings.noNeurons[1]));   -- layer size
+  else
+    model:add(initializeLL(settings.inputSize * (settings.seqL + settings.seqR + 1), settings.noNeurons[1]));    -- layer size
+  end
   model:add(nn.BatchNormalization(settings.noNeurons[1]));
   model:add(getAF());   -- layer type
   
   -- hidden layers
   for i = 1, settings.noHiddenLayers do
-    model:add(nn.Linear(settings.noNeurons[i], settings.noNeurons[i+1]));    -- layer size
+    if (settings.batchInit == 1) then
+      model:add(nn.Linear(settings.noNeurons[i], settings.noNeurons[i+1]));    -- layer size
+    else
+      model:add(initializeLL(settings.noNeurons[i], settings.noNeurons[i+1]));    -- layer size
+    end
     model:add(nn.BatchNormalization(settings.noNeurons[i+1]));
     model:add(getAF());   -- layer type
   end
