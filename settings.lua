@@ -47,6 +47,7 @@ function Settings(decode)
     settings.noNeurons = 512;
   elseif (settings.model == "batch") then
     settings.noHiddenLayers = 5;
+    settings.batchInit = 0;
     settings.noNeurons = torch.Tensor({768, 768, 768, 768, 768, 768});        -- size: noHiddenLayers + 1
   end
   
