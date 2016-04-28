@@ -120,14 +120,14 @@ for line in io.lines(settings.listFolder .. settings.decodeFile) do
     
     -- process batches
     for i = 1, batchSize, 1 do
-      local index = (noBatch - 1) * batchSize + i;     
+      local index = (noBatch - 1) * settings.batchSize + i;     
       ret = dataset:get(index);
       inputs[i] = ret.inp;
     end
     
     -- feed forward
     local pred = modelC:forward(inputs);  
-    
+
     -- normalize using framestats
     if (settings.applyFramestats == 1) then
       pred = applyFramestats(pred, framestats, count, settings.applyFramestatsType);
