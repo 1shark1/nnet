@@ -1,7 +1,9 @@
 
--- LM --- Utils
+-- LM -- Utils -- 20/5/16 --
 
--- split function
+
+
+-- function splitting string (http://stackoverflow.com/questions/1426954/split-string-in-lua)
 function split(inputstr, sep)
   if sep == nil then
     sep = "%s"
@@ -14,7 +16,9 @@ function split(inputstr, sep)
   return t
 end
 
--- parse csv
+
+
+-- function parsing CSV (http://lua-users.org/wiki/LuaCsv)
 function parseCSVLine (line, sep) 
 	local res = {}
 	local pos = 1
@@ -54,4 +58,5 @@ function parseCSVLine (line, sep)
 	end
 	return res
 end
+
 

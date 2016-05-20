@@ -1,5 +1,7 @@
 
--- LM --- Compute outputs
+-- LM -- DNN Decoding -- 20/5/16 --
+
+
 
 -- general libraries
 require 'torch'
@@ -10,141 +12,143 @@ require 'logroll'
 require 'nn'
 
 -- require settings
-if (arg[1]) then 
-  assert(require(string.gsub(arg[1], ".lua", "")));
+if arg[1] then 
+  assert(require(string.gsub(arg[1], ".lua", "")))
 else
   require 'settings'
 end
 
+-- set default tensor type to float
+torch.setdefaulttensortype('torch.FloatTensor')
+
 -- initialize settings
-settings = Settings(true);    
+settings = Settings(true) 
 
 -- add path to scripts
-if (settings.scriptFolder) then  
-  package.path = package.path .. ";" .. settings.scriptFolder .. "?.lua";
+if settings.scriptFolder then  
+  package.path = package.path .. ";" .. settings.scriptFolder .. "?.lua"
 end
 
 -- program requires
-require 'dataset'
 require 'utils'
 require 'io-utils'
 require 'set-utils'
 require 'nn-utils'
+require 'dataset'
 
--- load modules for cuda if selected
-if (settings.cuda == 1) then
+-- require cuda
+if settings.cuda == 1 then
   require 'cunn'
   require 'cutorch'  
 end
 
 -- load model from file
 if not paths.filep(settings.outputFolder .. settings.modFolder .. settings.startEpoch .. ".mod") then  
-  error('File ' .. settings.outputFolder .. settings.modFolder .. settings.startEpoch .. ".mod" .. ' does not exist!');
+  error('File ' .. settings.outputFolder .. settings.modFolder .. settings.startEpoch .. ".mod" .. ' does not exist!')
 end
-model = torch.load(settings.outputFolder .. settings.modFolder .. settings.startEpoch .. ".mod");
+local model = torch.load(settings.outputFolder .. settings.modFolder .. settings.startEpoch .. ".mod")
 
 -- load stats
-if (settings.computeStats == 1) then
-  settings.mean = readStat(settings.outputFolder .. settings.statsFolder .. '/mean.list');
-  settings.var = readStat(settings.outputFolder .. settings.statsFolder .. '/std.list')
-end
+settings.mean, settings.std = readStats() 
 
 -- load framestats
-if (settings.applyFramestats == 1) then
-  framestats, count = loadFramestats(settings.outputFolder .. settings.statsFolder .. '/framestats.list');
+local framestats, count
+if settings.applyFramestats == 1 then
+  framestats, count = readFramestats(settings.outputFolder .. settings.statsFolder .. '/framestats.list')
 end
 
 -- cuda on/off
-if (settings.cuda == 1) then 
-  model:cuda();
-  modelC = nn.Sequential();
-  modelC:add(nn.Copy('torch.FloatTensor', 'torch.CudaTensor'));
-  modelC:add(model);
-  modelC:add(nn.Copy('torch.CudaTensor', 'torch.FloatTensor'));     
-else
-  modelC = mlp;   
+if settings.cuda == 1 then 
+  model:cuda()
 end
 
 -- initialize logs
-flog = logroll.file_logger(settings.outputFolder .. settings.logFolder .. '/decode.log');
-plog = logroll.print_logger();
-log = logroll.combine(flog, plog);
+local flog = logroll.file_logger(settings.outputFolder .. settings.logFolder .. '/decode.log')
+local plog = logroll.print_logger()
+local log = logroll.combine(flog, plog)
 
 -- evaluation mode
-modelC:evaluate()
+model:evaluate()
 
-if not paths.filep(settings.listFolder .. settings.decodeFile) then  
-  error('File ' .. settings.listFolder .. settings.decodeFile .. ' does not exist!');
-end
+-- load filelist
+local filelist = readFilelist(settings.listFolder .. settings.decodeFile)
 
--- decode per file
-for line in io.lines(settings.listFolder .. settings.decodeFile) do
+-- decode files one by one
+for file = 1, #filelist, 1 do   
   
-  -- strip endline chars
-  line = string.gsub(line, "%s+", "");
-
-  -- prepare datasets
-  dataset = Dataset(line, 0, 1, 0); 
-  log.info("Decoding file: " .. line .. " type: " .. settings.decodeType);
+  -- prepare file
+  local dataset = Dataset(filelist[file], false, false, true)
+  log.info("Decoding file: " .. filelist[file] .. " type: " .. settings.decodeType)
   
   -- compute number of batches
-  noBatches = math.ceil(dataset:size() / settings.batchSize);
+  local noBatches = math.ceil(dataset:size() / settings.batchSize)
   
-  -- prepare output file
-  folders = split(line, "/");
-  fileParts = split(folders[#folders], ".");
-  os.execute("mkdir -p " .. settings.outputFolder .. settings.decodeFolder .. "/" .. folders[#folders-1]);
+  -- prepare output folder structure
+  local folders = split(filelist[file], "/")
+  local fileParts = split(folders[#folders], ".")
+  os.execute("mkdir -p " .. settings.outputFolder .. settings.decodeFolder .. "/" .. folders[#folders-1])
   
-  -- according to requested decode type
-  if (settings.decodeType == "lkl") then
-    ff = torch.DiskFile(settings.outputFolder .. settings.decodeFolder .. "/" .. folders[#folders-1] .. "/" .. fileParts[1] .. "." .. settings.decodeType, "w");
-    ff:binary();
-    saveHTKHeader(ff, dataset:size());
-  elseif (settings.decodeType == "txt") then
-    ff = io.open(settings.outputFolder .. settings.decodeFolder .. "/" .. folders[#folders-1] .. "/" .. fileParts[1] .. "." .. settings.decodeType, "w");
+  -- open according file
+  local ff
+  if settings.decodeType == "lkl" then
+    ff = torch.DiskFile(settings.outputFolder .. settings.decodeFolder .. "/" .. folders[#folders-1] .. "/" .. fileParts[1] .. "." .. settings.decodeType, "w")
+    ff:binary()
+    saveHTKHeader(ff, dataset:size(), true)
+  elseif settings.decodeType == "txt" then
+    ff = io.open(settings.outputFolder .. settings.decodeFolder .. "/" .. folders[#folders-1] .. "/" .. fileParts[1] .. "." .. settings.decodeType, "w")
   else
-    error('DecodeType: not supported');
+    error('DecodeType: not supported')
   end
-  
+
   -- process batches
-  for noBatch = 1, noBatches, 1 do
+  for noBatch = 1, noBatches, 1 do   
     
     -- last batch fix
-    batchSize = settings.batchSize;
-    if (noBatch == noBatches) then
-      batchSize = dataset:size() - ((noBatches-1) * settings.batchSize);
+    local batchSize = settings.batchSize
+    if noBatch == noBatches then
+      batchSize = dataset:size() - ((noBatches-1) * settings.batchSize)
     end
-
+  
     -- prepare input tensor
-    local inputs = torch.Tensor(batchSize, settings.inputSize * (settings.seqL + settings.seqR + 1)):zero();
-    
+    local inputs = torch.Tensor(batchSize, settings.inputSize * (settings.seqL + settings.seqR + 1)):zero()
+  
     -- process batches
     for i = 1, batchSize, 1 do
-      local index = (noBatch - 1) * settings.batchSize + i;     
-      ret = dataset:get(index);
-      inputs[i] = ret.inp;
+      local index = (noBatch - 1) * settings.batchSize + i
+      local ret = dataset[index]
+      inputs[i] = ret.inp
     end
     
+    -- cuda neccessities
+    if settings.cuda == 1 then
+      inputs = inputs:cuda()
+    end     
+    
     -- feed forward
-    local pred = modelC:forward(inputs);  
-
+    local pred = model:forward(inputs)  
+    
+    if settings.cuda == 1 then
+      pred = pred:typeAs(settings.mean)
+    end     
+    
     -- normalize using framestats
-    if (settings.applyFramestats == 1) then
-      pred = applyFramestats(pred, framestats, count, settings.applyFramestatsType);
+    if settings.applyFramestats == 1 then
+      pred = applyFramestats(pred, framestats, count)
     end
     
     -- save output
-    if (settings.decodeType == "lkl") then
-      ff:writeFloat(pred:storage());
-    elseif (settings.decodeType == "txt") then
+    if settings.decodeType == "lkl" then
+      ff:writeFloat(pred:storage())
+    elseif settings.decodeType == "txt" then
       for i = 1, batchSize, 1 do
-        _, mx = pred[i]:max(1);
-        ff:write(mx[1]-1 .. "\n");
+        local _, mx = pred[i]:max(1)
+        ff:write(mx[1]-1 .. "\n")
       end
-    end  
-      
-  end
-  
-  ff:close();
+    end 
+  end  
 
+  ff:close()
+  
 end
+
+

@@ -1,11 +1,16 @@
 # nnet
-A Torch based solution to training of DNNs (fe. for speech recognition)
 
-Use settings to configure the network
+info: a torch based solution to training of dnns (speech recognition, speech activity detection etc.)
 
-Inputs: lists (train/valid/test), param and target files, path is determined from the list
+inputs: training list, (evaluation lists), input files (htk format), target files (rec-mapped or target frames sequence in binary)
 
-Outputs: set in settings, stats, mod and log folder
+settings: use settings.lua to configure the dnn parameters
+
+outputs: trained networks (mods, nnets), stats (mean, var, framestats), logs
+
+version: v3 (20/5/2016)
+
+details: major overhaul + optim support, 40% training speedup, 20% evaluation speedup over v2
 
 LM
 
