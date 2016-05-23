@@ -1,5 +1,5 @@
 
--- LM -- Settings -- 20/5/16 --
+-- LM -- Settings -- 23/5/16 --
 
 
 
@@ -18,6 +18,7 @@ function Settings(decode)
   settings.learningRate = 0.08
   settings.learningRateDecay = 0
   settings.momentum = 0
+  settings.loadStats = 0                            -- load mean & std, on/off
   settings.computeStats = 1                         -- compute global normalizaion stats, on/off
   if settings.computeStats == 0 then
     settings.mean = torch.Tensor(settings.inputSize):zero()  

@@ -1,5 +1,5 @@
 
--- LM -- DNN Training -- 20/5/16 --
+-- LM -- DNN Training -- 24/5/16 --
 
 
 
@@ -43,14 +43,12 @@ require 'dataset'
 
 -- compute/load global stats on training set
 local stats
-if settings.computeStats == 1 then
-  if settings.startEpoch == 0 then
-    stats = Stats(settings.lists[1])
-    settings.mean = stats.mean
-    settings.std = stats.std
-  else
-    settings.mean, settings.std = readStats()
-  end
+if settings.loadStats == 1 then
+  settings.mean, settings.std = readStats()
+elseif settings.computeStats == 1 then
+  stats = Stats(settings.lists[1])
+  settings.mean = stats.mean
+  settings.std = stats.std
 end
 
 -- save stats to files
@@ -190,8 +188,9 @@ for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
     end  
   
     -- pick optimization
-    local state = getOptimState()
+    local state, config
     if settings.optimization == "sgd" then
+      state = getOptimStateSGD()
       optim.sgd(feval, parameters, state)
     else
       error('Optimization: not supported')

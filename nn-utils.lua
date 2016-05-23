@@ -1,5 +1,5 @@
 
--- LM -- DNN Utils -- 20/5/16 --
+-- LM -- DNN Utils -- 24/5/16 --
 
 
 
@@ -154,23 +154,6 @@ function getCriterion()
     error('Criterion: not supported')
   end
   
-end
-
-
-
--- function preparing state for optim
-function getOptimState()
-  
-  local state
-  
-  if settings.optimization == "sgd" then
-    state = getOptimStateSGD()
-  else
-    error('Optimization: not supported')
-  end
-  
-  return state
-
 end
 
 
