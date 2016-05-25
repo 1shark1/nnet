@@ -1,5 +1,5 @@
 
--- LM -- DNN Utils -- 24/5/16 --
+-- LM -- DNN Utils -- 25/5/16 --
 
 
 
@@ -158,18 +158,51 @@ end
 
 
 
--- function preparing state for optim - SGD
-function getOptimStateSGD()
+-- function selecting correct settings for optim
+function getOptimParams()
+  
+  local state, config
+  
+  if settings.optimization == "sgd" then
+    state = getOptimParamsSGD()
+  elseif settings.optimization == "other" then
+    state, config = getOptimParamsOther()
+  else
+    error('Optimization: not supported')
+  end
+    
+  return state, config
+  
+end
+
+
+
+-- function preparing settings for optim - SGD
+function getOptimParamsSGD()
   
   local state
   
   state = {
-    learningRate = settings.learningRate or 0.08,   
-    learningRateDecay = settings.learningRateDecay or 0,
-    momentum = settings.momentum or 0  
+    learningRate = settings.learningRate,   
+    learningRateDecay = settings.learningRateDecay,
+    momentum = settings.momentum  
   }
   
   return state
+  
+end
+
+
+
+-- function preparing settings for optim - other (testing purposes)
+function getOptimParamsOther()
+  
+  local state, config
+  
+  state = {}
+  config = {}
+  
+  return state, config
   
 end
 

@@ -1,5 +1,5 @@
 
--- LM -- DNN Training -- 24/5/16 --
+-- LM -- DNN Training -- 25/5/16 --
 
 
 
@@ -120,6 +120,9 @@ end
 -- retrieve parameters and gradients
 local parameters, gradParameters = model:getParameters()
 
+-- optim inits
+local state, config = getOptimParams()
+
 -- process by epochs
 for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
   
@@ -188,10 +191,10 @@ for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
     end  
   
     -- pick optimization
-    local state, config
     if settings.optimization == "sgd" then
-      state = getOptimStateSGD()
       optim.sgd(feval, parameters, state)
+    elseif settings.optimization == "other" then
+      optim.adam(feval, parameters, config, state) 
     else
       error('Optimization: not supported')
     end
