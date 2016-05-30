@@ -1,5 +1,5 @@
 
--- LM -- Dataset -- 20/5/16 --
+-- LM -- Dataset -- 30/5/16 --
 
 
 
@@ -58,7 +58,7 @@ function Dataset(list, isFilelist, computeFramestats, decode)
     local nSamples, sampPeriod, sampSize, parmKind, data, fvec, viewRefs
     
     -- read input files
-    if settings.inputView == 1 then
+    if settings.inputView > 0 then
       nSamples, sampPeriod, sampSize, parmKind, data, fvec, viewRefs = readView(filelist[file], true)
     else
       nSamples, sampPeriod, sampSize, parmKind, data, fvec = readInputs(filelist[file])
@@ -71,7 +71,7 @@ function Dataset(list, isFilelist, computeFramestats, decode)
         filelist[file] = filelist[file]:gsub(settings.parPath, settings.refPath)
       end
 
-      if settings.inputView == 1 then
+      if settings.inputView > 0 then
         references = viewRefs
       else
         references = readRefs(filelist[file], nSamples)

@@ -1,5 +1,5 @@
 
--- LM -- Settings -- 23/5/16 --
+-- LM -- Settings -- 30/5/16 --
 
 
 
@@ -55,7 +55,7 @@ function Settings(decode)
   settings.shuffle = 1                              -- shuffle training data, on/off
   settings.exportNNET = 1
   settings.drawERRs = 1
-  settings.inputView = 0                            -- read view input files, on/off
+  settings.inputView = 0                            -- read view input files, 0 - off, 1 - SAD, 2 - SCH
   settings.inputType = "htk"                        -- htk
   settings.refType = "rec-mapped"                   -- akulab / rec-mapped
   
@@ -78,7 +78,6 @@ function Settings(decode)
 
   -- decode settings 
   if decode then
-    -- main decode settings
     settings.decodeFile = 'cz-test-decode-small.list'
     settings.decodeFolder = '/decoded/'
     settings.decodeType = 'txt'                     -- lkl / txt

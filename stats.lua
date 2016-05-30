@@ -1,5 +1,5 @@
 
--- LM -- Stats -- 20/5/16 --
+-- LM -- Stats -- 30/5/16 --
 
 
 
@@ -33,7 +33,7 @@ function Stats(list)
     local nSamples, sampPeriod, sampSize, parmKind, data, fvec
 
     -- read input files
-    if settings.inputView == 1 then
+    if settings.inputView > 0 then
       nSamples, sampPeriod, sampSize, parmKind, data, fvec = readView(filelist[file])
     else
       nSamples, sampPeriod, sampSize, parmKind, data, fvec = readInputs(filelist[file])
