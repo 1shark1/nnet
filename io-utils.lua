@@ -1,5 +1,5 @@
 
--- LM -- Input/Output Utils -- 20/5/16 --
+-- LM -- Input/Output Utils -- 30/5/16 --
 
 
 
@@ -15,7 +15,7 @@ function readFilelist(filelist)
   io.input(file)
   
   -- if view -> skip the info line
-  if settings.inputView == 1 then
+  if settings.inputView > 0 then
     local info = io.read()
   end  
   
@@ -88,8 +88,23 @@ end
 
 
 
--- function reading DNN inputs & outputs - view
+-- function reading DNN inputs & outputs - view 
 function readView(file, prepareRefs)
+  
+  if settings.inputView == 1 then
+    return readViewV1(file, prepareRefs)
+  elseif settings.inputView == 2 then 
+    return readViewV2(file, prepareRefs)
+  else
+    error('ViewType: not supported')
+  end
+  
+end
+  
+  
+  
+-- function reading DNN inputs & outputs - view (SAD version - v1)
+function readViewV1(file, prepareRefs)
   
   -- only 2 blocks supported
   local blockCount = 2
@@ -161,6 +176,45 @@ function readView(file, prepareRefs)
   
   return fvec:size(1), sampPeriod, sampSize, parmKind, data, fvec, viewRefs
   
+end
+
+
+
+-- function reading DNN inputs & outputs - view (SCH version - v2)
+function readViewV2(file, prepareRefs)
+  
+  local nSamples, data, fvec, viewRefs
+  local samples = {}
+  
+  -- parse input lines
+  local line = parseCSVLine(file, ';')
+  
+  local sampPeriod, sampSize, parmKind, svec
+
+  -- check if the files exist
+  if not paths.filep(line[1] .. settings.parExt) then  
+    error('File ' .. line[1] .. settings.parExt .. ' does not exist!')
+  end
+  
+  -- read data
+  nSamples, sampPeriod, sampSize, parmKind, data, svec = readInputs(line[1])
+  
+  -- get requested data
+  fvec = svec[{{line[2] + 1, line[4] + 1}}]
+  
+  -- prepare references
+  if prepareRefs then
+    viewRefs = torch.Tensor(fvec:size(1)):zero()
+    
+    local s = line[3] - line[2] - settings.seqL
+    
+    for i = s + 1, s + settings.seqL + settings.seqR, 1 do
+      viewRefs[i] = 1
+    end
+  end
+  
+  return fvec:size(1), sampPeriod, sampSize, parmKind, data, fvec, viewRefs
+
 end
 
 
