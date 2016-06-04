@@ -1,5 +1,5 @@
 
--- LM -- Stats/Dataset Utils -- 20/5/16 --
+-- LM -- Stats/Dataset Utils -- 4/6/16 --
 
 
 
@@ -43,15 +43,15 @@ end
 
 
 -- function cloning borders - inputs
-function cloneBordersInputs(data, fvec) 
+function cloneBordersInputs(fvec) 
   
-  local pre = torch.Tensor(data, 1, torch.LongStorage{1, settings.inputSize})
-  local post = torch.Tensor(data, (fvec:size(1) - 1) * settings.inputSize + 1, torch.LongStorage{1, settings.inputSize})  
-  
+  local pre = fvec[{{1, {}}}]
+  local post = fvec[{{-1, {}}}]
+
   pre = pre:repeatTensor(settings.seqL, 1)
   post = post:repeatTensor(settings.seqR, 1)  
   
-  fvec = torch.cat(pre, torch.cat(fvec, post, 1), 1)
+  return torch.cat(pre, torch.cat(fvec, post, 1), 1)
   
 end
 

@@ -1,5 +1,5 @@
 
--- LM -- Dataset -- 30/5/16 --
+-- LM -- Dataset -- 4/6/16 --
 
 
 
@@ -55,13 +55,13 @@ function Dataset(list, isFilelist, computeFramestats, decode)
       flog.info('Processing file: ' .. filelist[file])
     end
     
-    local nSamples, sampPeriod, sampSize, parmKind, data, fvec, viewRefs
+    local nSamples, sampPeriod, sampSize, parmKind, fvec, viewRefs
     
     -- read input files
     if settings.inputView > 0 then
-      nSamples, sampPeriod, sampSize, parmKind, data, fvec, viewRefs = readView(filelist[file], true)
+      nSamples, sampPeriod, sampSize, parmKind, fvec, viewRefs = readView(filelist[file], true)
     else
-      nSamples, sampPeriod, sampSize, parmKind, data, fvec = readInputs(filelist[file])
+      nSamples, sampPeriod, sampSize, parmKind, fvec = readInputs(filelist[file])
     end
     
     -- read refs files
@@ -89,7 +89,7 @@ function Dataset(list, isFilelist, computeFramestats, decode)
 
     -- clone borders
     if settings.cloneBorders == 1 then
-      cloneBordersInputs(data, fvec)
+      fvec = cloneBordersInputs(fvec)
       if not decode then 
         references = cloneBordersRefs(references)
       end

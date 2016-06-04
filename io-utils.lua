@@ -1,5 +1,5 @@
 
--- LM -- Input/Output Utils -- 30/5/16 --
+-- LM -- Input/Output Utils -- 4/6/16 --
 
 
 
@@ -35,25 +35,21 @@ end
 
 
 -- function reading DNN inputs
-function readInputs(file)
-  
-  local nSamples, sampPeriod, sampSize, parmKind, data, fvec
+function readInputs(file, start, stop)
   
   -- switch to correct reading
   if settings.inputType == "htk" then
-    nSamples, sampPeriod, sampSize, parmKind, data, fvec = readHTK(file)
+    return readHTK(file, start, stop)
   else
     error('InputType: not supported')
   end
-  
-  return nSamples, sampPeriod, sampSize, parmKind, data, fvec
   
 end
 
 
 
 -- function reading DNN inputs - HTK format
-function readHTK(file) 
+function readHTK(file, start, stop) 
   
   -- check if the file exists
   if not paths.filep(file .. settings.parExt) then  
@@ -69,7 +65,13 @@ function readHTK(file)
   local sampPeriod = f:readInt()
   local sampSize = f:readShort()
   local parmKind = f:readShort()
-  
+
+  -- prepare to read parts
+  if start and stop then
+    f:seek(f:position() + ((start-1) * settings.inputSize * 4))
+    nSamples = stop - start + 1
+  end
+    
   -- ntx4 alignment fix
   if settings.dnnAlign == 1 then
     nSamples = nSamples - 1
@@ -82,7 +84,7 @@ function readHTK(file)
   -- create tensor from input data
   local fvec = torch.Tensor(data, 1, torch.LongStorage{nSamples, sampSize / 4})
   
-  return nSamples, sampPeriod, sampSize, parmKind, data, fvec
+  return nSamples, sampPeriod, sampSize, parmKind, fvec
   
 end
 
@@ -110,6 +112,7 @@ function readViewV1(file, prepareRefs)
   local blockCount = 2
   
   local nSamples, data, fvec, viewRefs
+  local sampPeriod, sampSize, parmKind
   local samples = {}
   
   -- parse input lines
@@ -117,8 +120,8 @@ function readViewV1(file, prepareRefs)
   
   -- prepare inputs
   for i = 1, blockCount, 1 do
-
-    local sampPeriod, sampSize, parmKind, svec
+    
+    local svec
 
     -- check if the files exist
     if not paths.filep(line[2+(i-1)*3] .. settings.parExt) then  
@@ -126,10 +129,9 @@ function readViewV1(file, prepareRefs)
     end
 
     -- read data
-    nSamples, sampPeriod, sampSize, parmKind, data, svec = readInputs(line[2+(i-1)*3])
-
+    nSamples, sampPeriod, sampSize, parmKind, svec = readInputs(line[2+(i-1)*3], line[3+(i-1)*3] + 1, line[4+(i-1)*3] + 1)
+    
     -- concat data
-    svec = svec[{{line[3+(i-1)*3] + 1, line[4+(i-1)*3] + 1}}]
     table.insert(samples, line[4+(i-1)*3] - line[3+(i-1)*3] + 1)
     if i == 1 then
       fvec = svec:clone()
@@ -157,24 +159,13 @@ function readViewV1(file, prepareRefs)
     end 
 
     -- fill the output vector
-    for i = 1, samples[1] - settings.seqL, 1 do
-      viewRefs[i] = classA
-    end
-    for i = samples[1] - settings.seqL + 1, samples[1], 1 do
-      viewRefs[i] = classB
-    end
-    for i = samples[1] + 1, samples[1] + settings.seqR, 1 do
-      viewRefs[i] = classC
-    end
-    for i =  samples[1] + settings.seqR + 1, fvec:size(1), 1 do
-      viewRefs[i] = classD
-    end 
-
+    viewRefs[{{1, samples[1] - settings.seqL}}] = classA
+    viewRefs[{{samples[1] - settings.seqL + 1, samples[1]}}] = classB
+    viewRefs[{{samples[1] + 1, samples[1] + settings.seqR}}] = classC
+    viewRefs[{{samples[1] + settings.seqR + 1, fvec:size(1)}}] = classD
   end
-
-  data = torch.view(fvec, settings.inputSize * fvec:size(1)):storage()
   
-  return fvec:size(1), sampPeriod, sampSize, parmKind, data, fvec, viewRefs
+  return fvec:size(1), sampPeriod, sampSize, parmKind, fvec, viewRefs
   
 end
 
@@ -183,37 +174,27 @@ end
 -- function reading DNN inputs & outputs - view (SCH version - v2)
 function readViewV2(file, prepareRefs)
   
-  local nSamples, data, fvec, viewRefs
+  local nSamples, viewRefs
   local samples = {}
   
   -- parse input lines
   local line = parseCSVLine(file, ';')
   
-  local sampPeriod, sampSize, parmKind, svec
+  local sampPeriod, sampSize, parmKind, fvec
 
   -- check if the files exist
   if not paths.filep(line[1] .. settings.parExt) then  
     error('File ' .. line[1] .. settings.parExt .. ' does not exist!')
   end
   
-  -- read data
-  nSamples, sampPeriod, sampSize, parmKind, data, svec = readInputs(line[1])
+  nSamples, sampPeriod, sampSize, parmKind, fvec = readInputs(line[1], line[2] + 1, line[4] + 1)
   
-  -- get requested data
-  fvec = svec[{{line[2] + 1, line[4] + 1}}]
-  
-  -- prepare references
   if prepareRefs then
     viewRefs = torch.Tensor(fvec:size(1)):zero()
-    
-    local s = line[3] - line[2] - settings.seqL
-    
-    for i = s + 1, s + settings.seqL + settings.seqR, 1 do
-      viewRefs[i] = 1
-    end
+    viewRefs[{{line[3] - line[2] - settings.seqL + 1, line[3] - line[2] + settings.seqR}}] = 1
   end
-  
-  return fvec:size(1), sampPeriod, sampSize, parmKind, data, fvec, viewRefs
+
+  return fvec:size(1), sampPeriod, sampSize, parmKind, fvec, viewRefs
 
 end
 
@@ -222,18 +203,14 @@ end
 -- function reading DNN references
 function readRefs(file, nSamples)
   
-  local refs
-  
   -- switch to correct reading
   if settings.refType == "akulab" then
-    refs = readAkulab(file, nSamples)
+    return readAkulab(file, nSamples)
   elseif settings.refType == "rec-mapped" then
-    refs = readRecMapped(file, nSamples)
+    return readRecMapped(file, nSamples)
   else
     error('RefType: not supported')
   end   
-  
-  return refs
   
 end
 

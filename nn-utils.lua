@@ -1,5 +1,5 @@
 
--- LM -- DNN Utils -- 25/5/16 --
+-- LM -- DNN Utils -- 4/6/16 --
 
 
 
@@ -20,19 +20,15 @@ end
 -- function building the required network
 function buildDNN()
   
-  local model
-  
   if settings.model == "classic" then
-    model = buildFFModel()
+    return buildFFModel()
   elseif settings.model == "residual" then
-    model = buildResidualModel()
+    return buildResidualModel()
   elseif settings.model == "batch" then
-    model = buildFFModel(true)
+    return buildFFModel(true)
   else
     error('Model: not supported')
   end
-  
-  return model
   
 end
 
@@ -161,17 +157,13 @@ end
 -- function selecting correct settings for optim
 function getOptimParams()
   
-  local state, config
-  
   if settings.optimization == "sgd" then
-    state = getOptimParamsSGD()
+    return getOptimParamsSGD()
   elseif settings.optimization == "other" then
-    state, config = getOptimParamsOther()
+    return getOptimParamsOther()
   else
     error('Optimization: not supported')
   end
-    
-  return state, config
   
 end
 

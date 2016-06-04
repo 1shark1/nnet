@@ -1,5 +1,5 @@
 
--- LM -- Stats -- 30/5/16 --
+-- LM -- Stats -- 4/6/16 --
 
 
 
@@ -30,18 +30,18 @@ function Stats(list)
 
     flog.info('Processing file: ' .. filelist[file])
 
-    local nSamples, sampPeriod, sampSize, parmKind, data, fvec
+    local nSamples, sampPeriod, sampSize, parmKind, fvec
 
     -- read input files
     if settings.inputView > 0 then
-      nSamples, sampPeriod, sampSize, parmKind, data, fvec = readView(filelist[file])
+      nSamples, sampPeriod, sampSize, parmKind, fvec = readView(filelist[file])
     else
-      nSamples, sampPeriod, sampSize, parmKind, data, fvec = readInputs(filelist[file])
+      nSamples, sampPeriod, sampSize, parmKind, fvec = readInputs(filelist[file])
     end
 
     -- clone borders
     if settings.cloneBorders == 1 then
-      cloneBordersInputs(data, fvec)
+      fvec = cloneBordersInputs(fvec)
       nSamples = nSamples + settings.seqL + settings.seqR
     end
   
