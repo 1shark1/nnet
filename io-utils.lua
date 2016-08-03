@@ -346,6 +346,11 @@ function saveFilelist(file, list)
   
   io.output(file)
   
+  -- fake first line of views for SAD/SCH
+  if settings.inputView > 0 then
+    io.write(file, "\n")
+  end
+  
   for i = 1, #list, 1 do
     io.write(list[i], "\n")
   end
