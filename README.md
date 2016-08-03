@@ -1,4 +1,8 @@
-# nnet v3
+# nnet v3.1
+
+version: v3.1 (3/8/2016)
+
+details: package update allowing users to train DNNs without worrying about RAM memory, set settings.packageCount
 
 version: v3 (20/5/2016)
 
