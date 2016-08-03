@@ -1,5 +1,5 @@
 
--- LM -- Settings -- 30/5/16 --
+-- LM -- Settings -- 3/8/16 --
 
 
 
@@ -52,6 +52,7 @@ function Settings(decode)
   
   -- other settings
   settings.cuda = 1
+  settings.packageCount = 2                         -- create packages for large datasets
   settings.shuffle = 1                              -- shuffle training data, on/off
   settings.exportNNET = 1
   settings.drawERRs = 1
@@ -78,7 +79,7 @@ function Settings(decode)
 
   -- decode settings 
   if decode then
-    settings.decodeFile = 'cz-test-decode-small.list'
+    settings.decodeFile = 'cz-test.list'
     settings.decodeFolder = '/decoded/'
     settings.decodeType = 'txt'                     -- lkl / txt
     settings.parExt = ".fbc3916"
