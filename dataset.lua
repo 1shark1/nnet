@@ -1,5 +1,5 @@
 
--- LM -- Dataset -- 4/6/16 --
+-- LM -- Dataset -- 3/8/16 --
 
 
 
@@ -10,15 +10,17 @@ function Dataset(list, isFilelist, computeFramestats, decode)
   local flog, plog, log
   
   -- logs
+  local listName = split(list, "/")
+  listName = listName[#listName]
   if not decode then
-    flog = logroll.file_logger(settings.outputFolder .. settings.logFolder .. '/' .. list .. '.log')
+    flog = logroll.file_logger(settings.outputFolder .. settings.logFolder .. '/' .. listName .. '.log')
     plog = logroll.print_logger()
     log = logroll.combine(flog, plog)
   end
 
   -- log & timer
   if not decode then
-    log.info('Preparing dataset: ' .. list)
+    log.info('Preparing dataset: ' .. listName)
   end
   local begin = sys.clock()
   
@@ -35,7 +37,7 @@ function Dataset(list, isFilelist, computeFramestats, decode)
   -- check if input is file or filelist and get file name(s)
   local filelist = {}
   if isFilelist then
-    filelist = readFilelist(settings.listFolder .. list)
+    filelist = readFilelist(list)
   else
     table.insert(filelist, list)
   end
