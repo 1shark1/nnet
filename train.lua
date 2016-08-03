@@ -1,5 +1,5 @@
 
--- LM -- DNN Training -- 25/5/16 --
+-- LM -- DNN Training -- 3/8/16 --
 
 
 
@@ -46,7 +46,7 @@ local stats
 if settings.loadStats == 1 then
   settings.mean, settings.std = readStats()
 elseif settings.computeStats == 1 then
-  stats = Stats(settings.lists[1])
+  stats = Stats(settings.listFolder .. settings.lists[1])
   settings.mean = stats.mean
   settings.std = stats.std
 end
@@ -56,26 +56,35 @@ saveStats(settings.mean, settings.std)
 
 -- prepare train set
 local sets = {}
-table.insert(sets, Dataset(settings.lists[1], true, true))
-
--- save framestats to files
-saveFramestats(sets[1].framestats)
-
+if settings.packageCount == 1 then        -- 1 package -> data to RAM
+  table.insert(sets, Dataset(settings.listFolder .. settings.lists[1], true, true))
+  
+  -- save framestats to files
+  saveFramestats(sets[1].framestats)
+elseif settings.packageCount > 1 then     -- more packages -> load data during training
+  savePackageFilelists(settings.listFolder .. settings.lists[1])
+  table.insert(sets, -1)
+end
+  
 -- prepare other lists
 for i = 2, #settings.lists, 1 do
-  table.insert(sets, Dataset(settings.lists[i], true, false))
+  table.insert(sets, Dataset(settings.listFolder .. settings.lists[i], true, false))
 end
-
+  
 -- initialize logs
 local flog = logroll.file_logger(settings.outputFolder .. settings.logFolder .. '/train.log')
 local plog = logroll.print_logger()
 local log = logroll.combine(flog, plog)
-
+  
 -- compute number of batches per sets
 local noBatches = {}
-table.insert(noBatches, (sets[1]:size() - sets[1]:size() % settings.batchSize) / settings.batchSize)
-
--- all frames for evaluation sets
+if settings.packageCount == 1 then 
+  table.insert(noBatches, (sets[1]:size() - sets[1]:size() % settings.batchSize) / settings.batchSize)
+elseif settings.packageCount > 1 then
+  table.insert(noBatches, -1) 
+end
+  
+-- all batch sizes for evaluation sets
 for i = 2, #sets, 1 do
   table.insert(noBatches, math.ceil(sets[i]:size() / settings.batchSize))
 end
@@ -121,7 +130,7 @@ end
 local parameters, gradParameters = model:getParameters()
 
 -- optim inits
-local state, config = getOptimParams()
+local config = getOptimParams()
 
 -- process by epochs
 for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
@@ -134,69 +143,101 @@ for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
   -- timer
   local etime = sys.clock()
   
-  -- shuffle data
-  local shuffle
-  if settings.shuffle == 1 then
-    shuffle = torch.randperm(sets[1]:size(), 'torch.LongTensor')
-  end
-  
   -- log
   log.info("Training epoch: " .. epoch .. "/" .. settings.noEpochs)
   
-  -- mini batch training
-  for noBatch = 1, noBatches[1], 1 do
-
-    -- prepare inputs & outputs tensors    
-    local inputs = torch.Tensor(settings.batchSize, settings.inputSize * (settings.seqL + settings.seqR + 1)):zero()
-    local targets = torch.Tensor(settings.batchSize):zero()
+  -- shuffle packages
+  local setOrder = torch.randperm(settings.packageCount)
   
-    -- process batches
-    for i = 1, settings.batchSize, 1 do
-  
-      -- pick frame 
-      local index = (noBatch - 1) * settings.batchSize + i   
-      if settings.shuffle == 1 then
-        index = shuffle[index]
-      end
-  
-      -- retrieve data for selected frame, fill input arrays for training
-      local ret = sets[1][index]
-      inputs[i] = ret.inp
-      targets[i] = ret.out
-    end
-  
-    -- create closure to evaluate f(X) and df/dX
-    local feval = function(x)
-      -- get new parameters
-      if x ~= parameters then parameters:copy(x) end
-  
-      -- zero the accumulation of the gradients
-      gradParameters:zero()
-  
-      -- cuda neccessities
-      if settings.cuda == 1 then
-        inputs = inputs:cuda()
-        targets = targets:cuda()
+  -- package training
+  for noPackage = 1, settings.packageCount, 1 do
+    
+    if settings.packageCount > 1 then
+      
+      -- prepare package
+      -- free memory
+      sets[1] = {}
+      collectgarbage('collect')
+      
+      -- prepare package dataset    
+      if epoch == 1 then
+        sets[1] = Dataset(settings.outputFolder .. settings.logFolder .. "pckg" .. setOrder[noPackage] .. ".list", true, true)
+        saveFramestats(sets[1].framestats, setOrder[noPackage])
+      else
+        sets[1] = Dataset(settings.outputFolder .. settings.logFolder .. "pckg" .. setOrder[noPackage] .. ".list", true, false)
       end
       
-      -- forward propagation     
-      local outputs = model:forward(inputs)
-      local f = criterion:forward(outputs, targets)
+      -- compute number of batches for training
+      noBatches[1] = (sets[1]:size() - sets[1]:size() % settings.batchSize) / settings.batchSize
+      
+      -- log
+      log.info("Training epoch: " .. epoch .. "/" .. settings.noEpochs .. " (package " .. noPackage .. "/" .. settings.packageCount .. ")")
+    
+    end
   
-      -- back propagation
-      local df_do = criterion:backward(outputs, targets)
-      model:backward(inputs, df_do)
-  
-      return f, gradParameters
-    end  
-  
-    -- pick optimization
-    if settings.optimization == "sgd" then
-      optim.sgd(feval, parameters, state)
-    elseif settings.optimization == "other" then
-      optim.adam(feval, parameters, config, state) 
-    else
-      error('Optimization: not supported')
+    -- shuffle data
+    local shuffle
+    if settings.shuffle == 1 then
+      shuffle = torch.randperm(sets[1]:size(), 'torch.LongTensor')
+    end
+    
+    -- mini batch training
+    for noBatch = 1, noBatches[1], 1 do
+
+      -- prepare inputs & outputs tensors    
+      local inputs = torch.Tensor(settings.batchSize, settings.inputSize * (settings.seqL + settings.seqR + 1)):zero()
+      local targets = torch.Tensor(settings.batchSize):zero()
+    
+      -- process batches
+      for i = 1, settings.batchSize, 1 do
+    
+        -- pick frame 
+        local index = (noBatch - 1) * settings.batchSize + i   
+        if settings.shuffle == 1 then
+          index = shuffle[index]
+        end
+    
+        -- retrieve data for selected frame, fill input arrays for training
+        local ret = sets[1][index]
+        inputs[i] = ret.inp
+        targets[i] = ret.out
+      end
+    
+      -- create closure to evaluate f(X) and df/dX
+      local feval = function(x)
+        -- get new parameters
+        if x ~= parameters then parameters:copy(x) end
+    
+        -- zero the accumulation of the gradients
+        gradParameters:zero()
+    
+        -- cuda neccessities
+        if settings.cuda == 1 then
+          inputs = inputs:cuda()
+          targets = targets:cuda()
+        end
+        
+        -- forward propagation     
+        local outputs = model:forward(inputs)
+        local f = criterion:forward(outputs, targets)
+    
+        -- back propagation
+        local df_do = criterion:backward(outputs, targets)
+        model:backward(inputs, df_do)
+    
+        return f, gradParameters
+      end  
+    
+      -- pick optimization
+      config = getOptimParams()
+      if settings.optimization == "sgd" then
+        optim.sgd(feval, parameters, config)
+      elseif settings.optimization == "other" then
+        optim.sgd(feval, parameters, config) 
+      else
+        error('Optimization: not supported')
+      end
+
     end
 
   end
