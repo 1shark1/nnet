@@ -1,5 +1,5 @@
 
--- LM -- Input/Output Utils -- 4/6/16 --
+-- LM -- Input/Output Utils -- 3/8/16 --
 
 
 
@@ -188,10 +188,28 @@ function readViewV2(file, prepareRefs)
   end
   
   nSamples, sampPeriod, sampSize, parmKind, fvec = readInputs(line[1], line[2] + 1, line[4] + 1)
-  
+
   if prepareRefs then
+    local outClass = 1
     viewRefs = torch.Tensor(fvec:size(1)):zero()
-    viewRefs[{{line[3] - line[2] - settings.seqL + 1, line[3] - line[2] + settings.seqR}}] = 1
+    
+    if line[7] and line[8] then
+      if line[7] == 'm' and line[8] == 'm' then
+        outClass = 2
+      elseif line[7] == 'f' and line[8] == 'f' then
+        outClass = 3
+      else
+        outClass = 1
+      end
+    end
+    
+    viewRefs[{{line[3] - line[2] - settings.seqL + 1, line[3] - line[2] + settings.seqR}}] = outClass
+    
+    -- i = 0
+    -- viewRefs[{{line[3] - line[2] - 50 + 1, line[3] - line[2] + 50}}]:apply(function(x)
+    --   i = i + 1
+    --   return i
+    -- end)  
   end
 
   return fvec:size(1), sampPeriod, sampSize, parmKind, fvec, viewRefs
@@ -323,6 +341,41 @@ end
 
 
 
+-- function saving filelist
+function saveFilelist(file, list)
+  
+  io.output(file)
+  
+  for i = 1, #list, 1 do
+    io.write(list[i], "\n")
+  end
+  
+  io.flush()
+  io.close()
+  
+end
+
+
+
+-- function saving package filelists
+function savePackageFilelists(filelist)
+  
+  local trainLists = {}
+  local trainList = readFilelist(filelist)
+  for i = 1, settings.packageCount, 1 do
+    trainLists[i] = {}
+  end
+  for i = 1, #trainList, 1 do
+    table.insert(trainLists[(i%settings.packageCount)+1], trainList[i])
+  end
+  for i = 1, settings.packageCount, 1 do
+    saveFilelist(settings.outputFolder .. settings.logFolder .. "pckg" .. i .. ".list", trainLists[i])
+  end
+  
+end
+
+
+
 -- function saving stats (mean / std)
 function saveStat(file, stat)
   
@@ -384,10 +437,15 @@ end
 
 
 -- function saving framestats (ntx43 & ntx4 version)
-function saveFramestats(framestats)
+function saveFramestats(framestats, append)
   
-  saveFramestat(settings.outputFolder .. settings.statsFolder .. '/framestats.list', framestats, 'ntx3')
-  saveFramestat(settings.outputFolder .. settings.statsFolder .. '/framestatsV4.list', framestats, 'ntx4')
+  if append then
+    saveFramestat(settings.outputFolder .. settings.statsFolder .. '/framestats-' .. append .. '.list', framestats, 'ntx3')
+    saveFramestat(settings.outputFolder .. settings.statsFolder .. '/framestatsV4-' .. append .. '.list', framestats, 'ntx4')
+  else
+    saveFramestat(settings.outputFolder .. settings.statsFolder .. '/framestats.list', framestats, 'ntx3')
+    saveFramestat(settings.outputFolder .. settings.statsFolder .. '/framestatsV4.list', framestats, 'ntx4')
+  end
   
 end
 
