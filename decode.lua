@@ -1,5 +1,5 @@
 
--- LM -- DNN Decoding -- 20/5/16 --
+-- LM -- DNN Decoding -- 3/8/16 --
 
 
 
@@ -94,7 +94,7 @@ for file = 1, #filelist, 1 do
     ff = torch.DiskFile(settings.outputFolder .. settings.decodeFolder .. "/" .. folders[#folders-1] .. "/" .. fileParts[1] .. "." .. settings.decodeType, "w")
     ff:binary()
     saveHTKHeader(ff, dataset:size(), true)
-  elseif settings.decodeType == "txt" then
+  elseif settings.decodeType == "txt" or settings.decodeType == "csv" then
     ff = io.open(settings.outputFolder .. settings.decodeFolder .. "/" .. folders[#folders-1] .. "/" .. fileParts[1] .. "." .. settings.decodeType, "w")
   else
     error('DecodeType: not supported')
@@ -143,6 +143,17 @@ for file = 1, #filelist, 1 do
       for i = 1, batchSize, 1 do
         local _, mx = pred[i]:max(1)
         ff:write(mx[1]-1 .. "\n")
+      end
+    elseif settings.decodeType == "csv" then
+      for i = 1, batchSize, 1 do
+        pred[i] = pred[i]:exp()
+        for j = 1, pred[i]:size(1), 1 do
+          ff:write(pred[i][j])
+          if j ~= pred[i]:size(1) then
+            ff:write(";")
+          end
+        end
+        ff:write("\n")
       end
     end 
   end  
