@@ -1,5 +1,5 @@
 
--- LM -- DNN Utils -- 4/6/16 --
+-- LM -- DNN Utils -- 3/8/16 --
 
 
 
@@ -172,15 +172,15 @@ end
 -- function preparing settings for optim - SGD
 function getOptimParamsSGD()
   
-  local state
+  local config
   
-  state = {
+  config = {
     learningRate = settings.learningRate,   
     learningRateDecay = settings.learningRateDecay,
     momentum = settings.momentum  
   }
   
-  return state
+  return config
   
 end
 
@@ -189,12 +189,11 @@ end
 -- function preparing settings for optim - other (testing purposes)
 function getOptimParamsOther()
   
-  local state, config
-  
-  state = {}
+  local config
+
   config = {}
   
-  return state, config
+  return config
   
 end
 
