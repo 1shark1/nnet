@@ -1,5 +1,5 @@
 
--- LM -- Utils -- 20/5/16 --
+-- LM -- Utils -- 3/8/16 --
 
 
 
@@ -59,4 +59,16 @@ function parseCSVLine (line, sep)
 	return res
 end
 
+
+
+-- function shuffling table (https://github.com/osadchuk/Corona-Utilities/blob/master/com/ludicroussoftware/Utilities.lua)
+function shuffleTable(t)
+	assert(t, "table.shuffle() expected a table, got nil")
+	local iterations = #t
+	local j
+	for i = iterations, 2, -1 do
+		j = math.random(i)
+		t[i], t[j] = t[j], t[i]
+	end
+end
 
