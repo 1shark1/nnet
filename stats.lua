@@ -1,5 +1,5 @@
 
--- LM -- Stats -- 4/6/16 --
+-- LM -- Stats -- 3/8/16 --
 
 
 
@@ -23,7 +23,7 @@ function Stats(list)
   stats.nSamples = 0
   
   -- load filelist
-  local filelist = readFilelist(settings.listFolder .. list)
+  local filelist = readFilelist(list)
   
   -- process files one by one
   for file = 1, #filelist, 1 do    
