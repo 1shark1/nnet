@@ -1,4 +1,8 @@
-# nnet v3.1
+# nnet v3.2
+
+version: v3.2 (11/8/2016)
+
+details: ability to save packages to files and load them during training (helps with large amount of small files)
 
 version: v3.1 (3/8/2016)
 
