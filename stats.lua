@@ -1,5 +1,5 @@
 
--- LM -- Stats -- 3/8/16 --
+-- LM -- Stats -- 11/8/16 --
 
 
 
@@ -36,7 +36,7 @@ function Stats(list)
     if settings.inputView > 0 then
       nSamples, sampPeriod, sampSize, parmKind, fvec = readView(filelist[file])
     else
-      nSamples, sampPeriod, sampSize, parmKind, fvec = readInputs(filelist[file])
+      nSamples, sampPeriod, sampSize, parmKind, fvec = readInputs(filelist[file] .. settings.parExt)
     end
 
     -- clone borders
