@@ -1,5 +1,5 @@
 
--- LM -- Input/Output Utils -- 3/8/16 --
+-- LM -- Input/Output Utils -- 11/8/16 --
 
 
 
@@ -52,12 +52,12 @@ end
 function readHTK(file, start, stop) 
   
   -- check if the file exists
-  if not paths.filep(file .. settings.parExt) then  
-    error('File ' .. file .. settings.parExt .. ' does not exist!')
+  if not paths.filep(file) then  
+    error('File ' .. file .. ' does not exist!')
   end
   
   -- read file
-  local f = torch.DiskFile(file .. settings.parExt, 'r')
+  local f = torch.DiskFile(file, 'r')
   f:binary()
   
   -- read HTK header
@@ -123,13 +123,8 @@ function readViewV1(file, prepareRefs)
     
     local svec
 
-    -- check if the files exist
-    if not paths.filep(line[2+(i-1)*3] .. settings.parExt) then  
-      error('File ' .. line[2+(i-1)*3] .. settings.parExt .. ' does not exist!')
-    end
-
     -- read data
-    nSamples, sampPeriod, sampSize, parmKind, svec = readInputs(line[2+(i-1)*3], line[3+(i-1)*3] + 1, line[4+(i-1)*3] + 1)
+    nSamples, sampPeriod, sampSize, parmKind, svec = readInputs(line[2+(i-1)*3] .. settings.parExt, line[3+(i-1)*3] + 1, line[4+(i-1)*3] + 1)
     
     -- concat data
     table.insert(samples, line[4+(i-1)*3] - line[3+(i-1)*3] + 1)
@@ -181,13 +176,8 @@ function readViewV2(file, prepareRefs)
   local line = parseCSVLine(file, ';')
   
   local sampPeriod, sampSize, parmKind, fvec
-
-  -- check if the files exist
-  if not paths.filep(line[1] .. settings.parExt) then  
-    error('File ' .. line[1] .. settings.parExt .. ' does not exist!')
-  end
   
-  nSamples, sampPeriod, sampSize, parmKind, fvec = readInputs(line[1], line[2] + 1, line[4] + 1)
+  nSamples, sampPeriod, sampSize, parmKind, fvec = readInputs(line[1] .. settings.parExt, line[2] + 1, line[4] + 1)
 
   if prepareRefs then
     local outClass = 1
@@ -238,17 +228,17 @@ end
 function readAkulab(file, nSamples)
   
   -- check if the file exists
-  if not paths.filep(file .. settings.refExt) then  
-    error('File ' .. file .. settings.refExt .. ' does not exist!')
+  if not paths.filep(file) then  
+    error('File ' .. file .. ' does not exist!')
   end	
   
-  local f = torch.DiskFile(file .. settings.refExt, 'r')
+  local f = torch.DiskFile(file, 'r')
   
   f:binary()
   local references = f:readInt(nSamples) 
   f:close()
   
-  return references
+  return torch.IntTensor(references):float()
   
 end
 
@@ -258,12 +248,12 @@ end
 function readRecMapped(file, nSamples)
 
   -- check if the file exists
-  if not paths.filep(file .. settings.refExt) then  
-    error('File ' .. file .. settings.refExt .. ' does not exist!')
+  if not paths.filep(file) then  
+    error('File ' .. file .. ' does not exist!')
   end
   
   local refs = {}
-  for line in io.lines(file .. settings.refExt) do
+  for line in io.lines(file) do
     local splitters = split(line, " ")
 
     for i = splitters[1], splitters[2]-1, 1 do
@@ -272,9 +262,10 @@ function readRecMapped(file, nSamples)
   end
 
   local refTensor = torch.Tensor(refs)
-  if settings.dnnAlign == 1 then 
-    refTensor = refTensor[{{1, nSamples}}]
-  end
+  
+  --if settings.dnnAlign == 1 then 
+    refTensor = torch.Tensor(refTensor[{{1, nSamples}}])
+  --end
   
   return refTensor
   
@@ -341,6 +332,23 @@ end
 
 
 
+-- function loading package dataset
+function readPackage(listName)
+
+  local path = settings.outputFolder .. settings.packageFolder
+  
+  -- read inputs
+  local nSamples, sampPeriod, sampSize, parmKind, fvec = readInputs(path .. "inp-" .. listName)
+  local refs = readAkulab(path .. "ref-" .. listName, nSamples)
+  local info = readAkulab(path .. "info-" .. listName, 3)
+  local nSamplesList = torch.totable(readAkulab(path .. "samp-" .. listName, info[3]))
+  
+  return nSamples, sampPeriod, sampSize, parmKind, fvec, refs, info[1], info[2], info[3], nSamplesList
+  
+end
+
+
+
 -- function saving filelist
 function saveFilelist(file, list)
   
@@ -374,7 +382,7 @@ function savePackageFilelists(filelist)
     table.insert(trainLists[(i%settings.packageCount)+1], trainList[i])
   end
   for i = 1, settings.packageCount, 1 do
-    saveFilelist(settings.outputFolder .. settings.logFolder .. "pckg" .. i .. ".list", trainLists[i])
+    saveFilelist(settings.outputFolder .. settings.packageFolder .. "pckg" .. i .. ".list", trainLists[i])
   end
   
 end
@@ -497,6 +505,71 @@ function saveModel(ifile, ofile)
     local stor = linearNodes[i].weight:float():storage()
     f:writeFloat(stor)
   end
+  f:close()
+  
+end
+
+
+
+-- function saving package data
+function savePackage(cache, nSamples, globalSamples, totalSamples, filesCount, listName)
+  
+  local path = settings.outputFolder .. settings.packageFolder
+  os.execute("mkdir -p " .. path)
+  
+  saveCacheHTK(path .. "inp-" .. listName, cache, globalSamples)
+  saveCacheAkulab(path .. "ref-" .. listName, cache)
+  saveIntTable(path .. "samp-" .. listName, nSamples)
+  saveIntTable(path .. "info-" .. listName, {globalSamples, totalSamples, filesCount})
+  
+end
+
+
+
+-- function saving input data (table of xd tensors) to htk format file
+function saveCacheHTK(file, cache, globalSamples)
+  
+  local f = torch.DiskFile(file, "w")
+  f:binary()
+  
+  saveHTKHeader(f, globalSamples)
+  
+  for i = 1, #cache, 1 do
+    f:writeFloat(cache[i].inp:storage())
+  end
+  
+  f:close()
+  
+end  
+
+
+
+-- function saving refs (table of 1d tensor) to akulab format file
+function saveCacheAkulab(file, cache)
+  
+  local f = torch.DiskFile(file, "w")
+  f:binary()
+      
+  for i = 1, #cache, 1 do
+    f:writeInt(cache[i].out:int():storage())
+  end
+
+  f:close()
+  
+end
+
+
+
+-- function saving 1d table to file as ints
+function saveIntTable(file, table)
+  
+  local f = torch.DiskFile(file, "w")
+  f:binary()
+      
+  for i = 1, #table, 1 do
+    f:writeInt(table[i])
+  end
+  
   f:close()
   
 end
