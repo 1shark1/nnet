@@ -1,5 +1,5 @@
 
--- LM -- DNN Training -- 3/8/16 --
+-- LM -- DNN Training -- 11/8/16 --
 
 
 
@@ -17,10 +17,10 @@ require 'gnuplot'
 if arg[1] then 
   assert(require(string.gsub(arg[1], ".lua", "")))
 else
-  require 'settings'
+  require 'settings-test'
 end
 
--- torch.manualSeed(1)
+torch.manualSeed(1)
 
 -- set default tensor type to float
 torch.setdefaulttensortype('torch.FloatTensor')
@@ -62,8 +62,21 @@ if settings.packageCount == 1 then        -- 1 package -> data to RAM
   -- save framestats to files
   saveFramestats(sets[1].framestats)
 elseif settings.packageCount > 1 then     -- more packages -> load data during training
-  savePackageFilelists(settings.listFolder .. settings.lists[1])
+  os.execute("mkdir -p " .. settings.outputFolder .. settings.packageFolder)
   table.insert(sets, -1)
+  if settings.loadPackage == 0 then
+    savePackageFilelists(settings.listFolder .. settings.lists[1])
+  
+    -- save packages
+    if settings.savePackage == 1 then
+      for i = 1, settings.packageCount, 1 do
+        local dataset = Dataset(settings.outputFolder .. settings.packageFolder .. "pckg" .. i .. ".list", true, true, false, true)
+        saveFramestats(dataset.framestats, i)
+        dataset = {}
+        collectgarbage('collect')
+      end
+    end
+  end
 end
   
 -- prepare other lists
@@ -160,12 +173,15 @@ for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
       collectgarbage('collect')
       
       -- prepare package dataset    
-      if epoch == 1 then
-        sets[1] = Dataset(settings.outputFolder .. settings.logFolder .. "pckg" .. setOrder[noPackage] .. ".list", true, true)
-        saveFramestats(sets[1].framestats, setOrder[noPackage])
+      if settings.savePackage == 1 or settings.loadPackage == 1 then
+        sets[1] = Dataset(settings.outputFolder .. settings.packageFolder .. "pckg" .. setOrder[noPackage] .. ".list", true, false, true, false)
       else
-        sets[1] = Dataset(settings.outputFolder .. settings.logFolder .. "pckg" .. setOrder[noPackage] .. ".list", true, false)
-      end
+        if epoch == 1 then
+          sets[1] = Dataset(settings.outputFolder .. settings.packageFolder .. "pckg" .. setOrder[noPackage] .. ".list", true, true)
+        else
+          sets[1] = Dataset(settings.outputFolder .. settings.packageFolder .. "pckg" .. setOrder[noPackage] .. ".list", true, false)
+        end
+      end   
       
       -- compute number of batches for training
       noBatches[1] = (sets[1]:size() - sets[1]:size() % settings.batchSize) / settings.batchSize
@@ -197,10 +213,11 @@ for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
           index = shuffle[index]
         end
     
-        -- retrieve data for selected frame, fill input arrays for training
+        -- retrieve data for selected frame, fill input arrays for training       
         local ret = sets[1][index]
         inputs[i] = ret.inp
         targets[i] = ret.out
+
       end
     
       -- create closure to evaluate f(X) and df/dX
