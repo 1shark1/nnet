@@ -1,5 +1,5 @@
 
--- LM -- DNN Decoding -- 3/8/16 --
+-- LM -- DNN Decoding -- 11/8/16 --
 
 
 
@@ -77,7 +77,7 @@ local filelist = readFilelist(settings.listFolder .. settings.decodeFile)
 for file = 1, #filelist, 1 do   
   
   -- prepare file
-  local dataset = Dataset(filelist[file], false, false, true)
+  local dataset = Dataset(filelist[file], false, false, false, false, true)
   log.info("Decoding file: " .. filelist[file] .. " type: " .. settings.decodeType)
   
   -- compute number of batches
