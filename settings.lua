@@ -1,5 +1,5 @@
 
--- LM -- Settings -- 3/8/16 --
+-- LM -- Settings -- 11/8/16 --
 
 
 
@@ -52,7 +52,11 @@ function Settings(decode)
   
   -- other settings
   settings.cuda = 1
-  settings.packageCount = 2                         -- create packages for large datasets
+  settings.packageCount = 1                         -- create packages for large datasets
+  if settings.packageCount > 1 then
+	settings.loadPackage = 0						-- load previously saved packages
+    settings.savePackage = 1                        -- save packages to files
+  end
   settings.shuffle = 1                              -- shuffle training data, on/off
   settings.exportNNET = 1
   settings.drawERRs = 1
@@ -75,6 +79,9 @@ function Settings(decode)
   settings.statsFolder = "/stats/"
   settings.logFolder = "/log/"
   settings.modFolder = "/mod/"
+  if settings.packageCount > 1 then
+    settings.packageFolder = "/pckg/"
+  end
   settings.logPath = "settings.log"
 
   -- decode settings 
