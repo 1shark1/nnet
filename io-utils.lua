@@ -213,7 +213,7 @@ function readRefs(file, nSamples)
   
   -- switch to correct reading
   if settings.refType == "akulab" then
-    return readAkulab(file, nSamples)
+    return readAkulab(file, nSamples):float()
   elseif settings.refType == "rec-mapped" then
     return readRecMapped(file, nSamples)
   else
@@ -238,7 +238,7 @@ function readAkulab(file, nSamples)
   local references = f:readInt(nSamples) 
   f:close()
   
-  return torch.IntTensor(references):float()
+  return torch.IntTensor(references)
   
 end
 
@@ -339,11 +339,11 @@ function readPackage(listName)
   
   -- read inputs
   local nSamples, sampPeriod, sampSize, parmKind, fvec = readInputs(path .. "inp-" .. listName)
-  local refs = readAkulab(path .. "ref-" .. listName, nSamples)
+  local refs = readAkulab(path .. "ref-" .. listName, nSamples):float()
   local info = readAkulab(path .. "info-" .. listName, 3)
   local nSamplesList = torch.totable(readAkulab(path .. "samp-" .. listName, info[3]))
   
-  return nSamples, sampPeriod, sampSize, parmKind, fvec, refs, info[1], info[2], info[3], nSamplesList
+  return nSamples, sampPeriod, sampSize, parmKind, fvec, refs, info[2], nSamplesList
   
 end
 
@@ -512,10 +512,12 @@ end
 
 
 -- function saving package data
-function savePackage(cache, nSamples, globalSamples, totalSamples, filesCount, listName)
+function savePackage(cache, nSamples, totalSamples, filesCount, listName)
   
   local path = settings.outputFolder .. settings.packageFolder
   os.execute("mkdir -p " .. path)
+  
+  local globalSamples = totalSamples + filesCount * (settings.seqL + settings.seqR)
   
   saveCacheHTK(path .. "inp-" .. listName, cache, globalSamples)
   saveCacheAkulab(path .. "ref-" .. listName, cache)
