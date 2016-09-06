@@ -69,16 +69,20 @@ elseif settings.packageCount > 1 then     -- more packages -> load data during t
   
     -- save packages
     if settings.savePackage == 1 then
-      for i = 1, settings.packageCount, 1 do
-        local dataset = Dataset(settings.outputFolder .. settings.packageFolder .. "pckg" .. i .. ".list", true, true, false, true)
-        saveFramestats(dataset.framestats, i)
-        dataset = {}
-        collectgarbage('collect')
+      for i = 1, settings.packageCount, 1 do        
+        sets[1] = Dataset(settings.outputFolder .. settings.packageFolder .. "pckg" .. i .. ".list", true, true, false, true)
+        saveFramestats(sets[1].framestats, i)
+        sets[1] = {}
+        collectgarbage()
       end
     end
+    -- fix settings for training (properties applied to packages)
+    settings.applyCMS = 0   
+    settings.cloneBorders = 0  
+    settings.dnnAlign = 0 
   end
 end
-  
+
 -- prepare other lists
 for i = 2, #settings.lists, 1 do
   table.insert(sets, Dataset(settings.listFolder .. settings.lists[i], true, false))
@@ -170,7 +174,7 @@ for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
       -- prepare package
       -- free memory
       sets[1] = {}
-      collectgarbage('collect')
+      collectgarbage()
       
       -- prepare package dataset    
       if settings.savePackage == 1 or settings.loadPackage == 1 then
