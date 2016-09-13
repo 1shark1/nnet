@@ -12,11 +12,11 @@ require 'logroll'
 require 'nn'
 
 -- require settings
+local setts = 'settings-test'
 if arg[1] then 
-  assert(require(string.gsub(arg[1], ".lua", "")))
-else
-  require 'settings'
+  setts = string.gsub(arg[1], ".lua", "")
 end
+assert(require(setts))
 
 -- set default tensor type to float
 torch.setdefaulttensortype('torch.FloatTensor')
