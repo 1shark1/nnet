@@ -54,7 +54,7 @@ function Settings(decode)
   settings.cuda = 1
   settings.packageCount = 1                         -- create packages for large datasets
   if settings.packageCount > 1 then
-	settings.loadPackage = 0						-- load previously saved packages
+    settings.loadPackage = 0                        -- option to load previously saved packages (higher priority than savePackage) 
     settings.savePackage = 1                        -- save packages to files
   end
   settings.shuffle = 1                              -- shuffle training data, on/off
