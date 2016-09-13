@@ -14,11 +14,11 @@ require 'logroll'
 require 'gnuplot'
 
 -- require settings
+local setts = 'settings-test'
 if arg[1] then 
-  assert(require(string.gsub(arg[1], ".lua", "")))
-else
-  require 'settings-test'
+  setts = string.gsub(arg[1], ".lua", "")
 end
+assert(require(setts))
 
 torch.manualSeed(1)
 
@@ -69,14 +69,9 @@ elseif settings.packageCount > 1 then     -- more packages -> load data during t
   
     -- save packages
     if settings.savePackage == 1 then
-      for i = 1, settings.packageCount, 1 do        
-        sets[1] = Dataset(settings.outputFolder .. settings.packageFolder .. "pckg" .. i .. ".list", true, true, false, true)
-        saveFramestats(sets[1].framestats, i)
-        sets[1] = {}
-        collectgarbage()
-      end
+      os.execute("th save-pckg.lua " .. setts)
     end
-    -- fix settings for training (properties applied to packages)
+    -- fix settings for training (properties already applied to packages)
     settings.applyCMS = 0   
     settings.cloneBorders = 0  
     settings.dnnAlign = 0 
