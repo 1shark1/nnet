@@ -1,5 +1,5 @@
 
--- LM -- Settings -- 11/8/16 --
+-- LM -- Settings -- 5/10/16 --
 
 
 
@@ -28,7 +28,7 @@ function Settings(decode)
   if settings.applyCMS == 1 then
     settings.cmsSize = 100
   end  
-  settings.cloneBorders = 0                         -- clone first & last frame to allow training on border frames, on/off
+  settings.cloneBorders = 0                         -- 1 - clone first & last frame to allow training on border frames, 2 - add zeros 
   settings.dnnAlign = 0                             -- ntx4 dnn align, on/off
   settings.activationFunction = "relu"              -- relu / tanh / sigmoid
   settings.finalActivationFunction = "logsoftmax"   -- logsoftmax
@@ -54,13 +54,14 @@ function Settings(decode)
   settings.cuda = 1
   settings.packageCount = 1                         -- create packages for large datasets
   if settings.packageCount > 1 then
-    settings.loadPackage = 0                        -- option to load previously saved packages (higher priority than savePackage) 
+    settings.loadPackage = 0                        -- option to load previously saved packages (higher priority than savePackage)
     settings.savePackage = 1                        -- save packages to files
   end
   settings.shuffle = 1                              -- shuffle training data, on/off
   settings.exportNNET = 1
   settings.drawERRs = 1
-  settings.inputView = 0                            -- read view input files, 0 - off, 1 - SAD, 2 - SCH
+  settings.inputView = 0                            -- read view input files, 0 - off, 1 - SAD, 2 - SCH, 3 - DM (Zoraida)
+  settings.confusionMatrixInfo = 0                  -- save confusion matrix info
   settings.inputType = "htk"                        -- htk
   settings.refType = "rec-mapped"                   -- akulab / rec-mapped
   
