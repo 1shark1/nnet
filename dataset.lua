@@ -1,5 +1,5 @@
 
--- LM -- Dataset -- 11/8/16 --
+-- LM -- Dataset -- 5/10/16 --
 
 
 
@@ -60,17 +60,17 @@ function Dataset(list, isFilelist, computeFramestats, loadPackageData, savePacka
         flog.info('Processing file: ' .. filelist[file])
       end
       
-      local nSamples, sampPeriod, sampSize, parmKind, fvec, viewRefs
+      local fvec, viewRefs
       
       -- read input files
       if settings.inputView > 0 then
-        nSamples, sampPeriod, sampSize, parmKind, fvec, viewRefs = readView(filelist[file], true)
+        _, _, _, _, fvec, viewRefs = readView(filelist[file], true)
       else
-        nSamples, sampPeriod, sampSize, parmKind, fvec = readInputs(filelist[file] .. settings.parExt)
+        _, _, _, _, fvec = readInputs(filelist[file] .. settings.parExt)
       end
       
       -- filter short recordings for training
-      if nSamples - settings.seqL - settings.seqR > 0 or (settings.cloneBorders == 1 and nSamples > 0) then
+      if fvec:size(1) - settings.seqL - settings.seqR > 0 or (settings.cloneBorders == 1 and fvec:size(1) > 0) then
       
         -- read refs files
         local references
@@ -82,9 +82,9 @@ function Dataset(list, isFilelist, computeFramestats, loadPackageData, savePacka
           if settings.inputView > 0 then
             references = viewRefs
           else
-            references = readRefs(filelist[file] .. settings.refExt, nSamples)
+            references = readRefs(filelist[file] .. settings.refExt, fvec:size(1))
           end    
-          
+
           -- compute framestats
           if computeFramestats then
             for i = 1, references:size(1), 1 do
@@ -96,29 +96,27 @@ function Dataset(list, isFilelist, computeFramestats, loadPackageData, savePacka
         end
 
         -- clone borders
-        if settings.cloneBorders == 1 then
-          fvec = cloneBordersInputs(fvec)
+        if settings.cloneBorders > 0 then
+          fvec = fillBordersInputs(fvec)
           if not decode then 
-            references = cloneBordersRefs(references)
+            references = fillBordersRefs(references)
           end
-          nSamples = nSamples + settings.seqL + settings.seqR
         end
         
         -- apply CMS
         if settings.applyCMS == 1 then
-          applyCMS(fvec, nSamples)
+          applyCMS(fvec)
         end    
+      
+        -- save counts of samples per file to table
+        table.insert(dataset.nSamplesList, fvec:size(1) - settings.seqL - settings.seqR)
+      
+        -- calculate total samples
+        totalSamples = totalSamples + fvec:size(1) - settings.seqL - settings.seqR
       
         -- store data to memory
         fvec = fvec:view(fvec:size(1) * settings.inputSize)
         table.insert(dataset.cache, {inp = fvec, out = references})
-      
-        -- save counts of samples per file to table
-        nSamples = nSamples - settings.seqL - settings.seqR
-        table.insert(dataset.nSamplesList, nSamples)
-      
-        -- calculate total samples
-        totalSamples = totalSamples + nSamples
       
       end
     end
@@ -150,8 +148,8 @@ function Dataset(list, isFilelist, computeFramestats, loadPackageData, savePacka
   else
   
   -- load package
-    local nSamples, sampPeriod, sampSize, parmKind, fvec, references
-    nSamples, sampPeriod, sampSize, parmKind, fvec, references, totalSamples, dataset.nSamplesList = readPackage(listName)      
+    local fvec, references
+    _, _, _, _, fvec, references, totalSamples, dataset.nSamplesList = readPackage(listName)      
     fvec = fvec:view(fvec:size(1) * settings.inputSize)
     table.insert(dataset.cache, { inp = fvec, out = references })
     
