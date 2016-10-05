@@ -10,7 +10,7 @@ function Settings(decode)
   -- general DNN settings
   settings.inputSize = 39
   settings.outputSize = 3875  
-  settings.noEpochs = 10
+  settings.noEpochs = 15
   settings.startEpoch = 0
   settings.batchSize = 1024
   settings.seqL = 5                                 -- input context window - number of preceding frames
@@ -33,7 +33,7 @@ function Settings(decode)
   settings.activationFunction = "relu"              -- relu / tanh / sigmoid
   settings.finalActivationFunction = "logsoftmax"   -- logsoftmax
   settings.criterion = "nll"                        -- nll
-  settings.optimization = "sgd"                     -- sgd
+  settings.optimization = "other"                   -- sgd
   
   -- model based settings
   settings.model = "classic"                        -- classic / residual / batch
@@ -74,7 +74,7 @@ function Settings(decode)
   settings.refExt = ".rec.mapped"
   settings.listFolder = "lists/"
   settings.lists = {'cz-cz48-train.list', 'cz-cz48-test.list', 'cz-cz48-valid.list'}    -- lists, first for training, the rest for evaluation
-  settings.modelName = "moje-sit"
+  settings.modelName = "MODEL"
   settings.outputFolder = "/data/nnModels/" .. settings.modelName
   settings.statsFolder = "/stats/"
   settings.logFolder = "/log/"
