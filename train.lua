@@ -1,5 +1,5 @@
 
--- LM -- DNN Training -- 11/8/16 --
+-- LM -- DNN Training -- 5/10/16 --
 
 
 
@@ -71,16 +71,21 @@ elseif settings.packageCount > 1 then     -- more packages -> load data during t
     if settings.savePackage == 1 then
       os.execute("th save-pckg.lua " .. setts)
     end
-    -- fix settings for training (properties already applied to packages)
-    settings.applyCMS = 0   
-    settings.cloneBorders = 0  
-    settings.dnnAlign = 0 
   end
 end
 
 -- prepare other lists
 for i = 2, #settings.lists, 1 do
   table.insert(sets, Dataset(settings.listFolder .. settings.lists[i], true, false))
+end
+
+-- fix settings for training of packages (properties already applied to packages)
+if settings.packageCount > 1 then 
+  if settings.savePackage == 1 or settings.loadPackage == 1 then
+    settings.applyCMS = 0   
+    settings.cloneBorders = 0  
+    settings.dnnAlign = 0 
+  end
 end
   
 -- initialize logs
@@ -277,6 +282,11 @@ for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
   -- process evaluation lists
   for i = 2, #settings.lists, 1 do
     
+    -- open file for saving confusion matrix info
+    if settings.confusionMatrixInfo == 1 then
+      io.output(settings.outputFolder .. settings.statsFolder .. "/conf-" .. settings.lists[i] .. "-" .. epoch .. ".stats")
+    end
+    
     -- initialize evaluation
     local err_mx = 0
     local all = 0  
@@ -320,9 +330,21 @@ for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
       mx = mx:typeAs(targets)      
       err_mx = err_mx + torch.sum(torch.ne(mx, targets))
       all = all + batchSize     
-  
+      
+      -- save confusion matrix info
+      if settings.confusionMatrixInfo == 1 then
+        for k = 1, batchSize, 1 do
+          io.write(torch.totable(mx[k])[1], ";", targets[k], "\n")
+        end
+      end
     end
-
+    
+    -- close confusion matrix info file
+    if settings.confusionMatrixInfo == 1 then
+      io.flush()
+      io.close()
+    end
+    
     -- save error rate for graph and log
     local err = 100 * err_mx / all
     table.insert(errorTable[i-1], err)
