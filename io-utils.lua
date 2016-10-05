@@ -1,5 +1,5 @@
 
--- LM -- Input/Output Utils -- 11/8/16 --
+-- LM -- Input/Output Utils -- 5/10/16 --
 
 
 
@@ -97,6 +97,8 @@ function readView(file, prepareRefs)
     return readViewV1(file, prepareRefs)
   elseif settings.inputView == 2 then 
     return readViewV2(file, prepareRefs)
+  elseif settings.inputView == 3 then 
+    return readViewV3(file, prepareRefs)
   else
     error('ViewType: not supported')
   end
@@ -204,6 +206,45 @@ function readViewV2(file, prepareRefs)
 
   return fvec:size(1), sampPeriod, sampSize, parmKind, fvec, viewRefs
 
+end
+
+
+
+-- function reading DNN inputs & outputs - view (Dialog Managment version - v3, Zoraida)
+function readViewV3(file, prepareRefs)
+
+  local line = parseCSVLine(file, ';')
+  
+  line[2] = tonumber(line[2])
+  
+  if prepareRefs and tonumber(line[3]) == 0 then
+    error('References are not available')
+  end
+
+  local fvec = {}
+  local viewRefs = {}
+  
+  local step = 2
+  if tonumber(line[3]) == 1  then
+    step = 3
+  end
+  
+  for i = 4, #line, step do
+    table.insert(fvec, tonumber(line[i]))
+        
+    for c in line[i+1]:gmatch"." do
+      table.insert(fvec, tonumber(c))
+    end
+    
+    if step == 3 then
+      table.insert(viewRefs, tonumber(line[i+2]))
+    end
+  end
+    
+  fvec = torch.Tensor(fvec):view(line[2], settings.inputSize)
+
+  return fvec:size(1), -1, -1, -1, fvec, torch.Tensor(viewRefs)
+  
 end
 
 
