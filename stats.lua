@@ -1,5 +1,5 @@
 
--- LM -- Stats -- 11/8/16 --
+-- LM -- Stats -- 5/10/16 --
 
 
 
@@ -30,24 +30,18 @@ function Stats(list)
 
     flog.info('Processing file: ' .. filelist[file])
 
-    local nSamples, sampPeriod, sampSize, parmKind, fvec
+    local fvec
 
     -- read input files
     if settings.inputView > 0 then
-      nSamples, sampPeriod, sampSize, parmKind, fvec = readView(filelist[file])
+      _, _, _, _, fvec = readView(filelist[file])
     else
-      nSamples, sampPeriod, sampSize, parmKind, fvec = readInputs(filelist[file] .. settings.parExt)
-    end
-
-    -- clone borders
-    if settings.cloneBorders == 1 then
-      fvec = cloneBordersInputs(fvec)
-      nSamples = nSamples + settings.seqL + settings.seqR
+      _, _, _, _, fvec = readInputs(filelist[file] .. settings.parExt)
     end
   
     -- apply CMS
     if settings.applyCMS == 1 then
-      applyCMS(fvec, nSamples)
+      applyCMS(fvec)
     end   
 
     -- compute global stats
