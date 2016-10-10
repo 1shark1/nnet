@@ -113,7 +113,7 @@ function fillBordersRefs(refs)
   if settings.cloneBorders == 1 then
     return cloneBordersRefs(refs)
   elseif settings.cloneBorders == 2 then
-    return fillValueBordersRefs(refs, -1)
+    return fillValueBordersRefs(refs, 0)
   else
     error('FillBordersInputType: not supported')
   end
@@ -125,40 +125,47 @@ end
 -- function cloning borders - references
 function cloneBordersRefs(refs) 
   
-  local curOut = torch.Tensor(refs:size(1) + settings.seqL + settings.seqR)  
+  local pre = refs[{{1}}]
+  local post = refs[{{-1}}]
   
-  for i = 1, settings.seqL, 1 do
-    curOut[i] = refs[1]
-  end  
-  for i = settings.seqL + 1, curOut:size(1) - settings.seqR - settings.seqL, 1 do
-    curOut[i] = refs[i]
-  end  
-  for i = curOut:size(1) - settings.seqR - settings.seqL + 1, curOut:size(1) - settings.seqL, 1 do
-    curOut[i] = refs[refs:size(1)]
-  end    
-
-  return curOut
+    -- clone borders
+  if settings.seqL > 0 and settings.seqR > 0 then
+    pre = pre:repeatTensor(settings.seqL, 1)
+    post = post:repeatTensor(settings.seqR, 1)  
+    return torch.cat(pre, torch.cat(refs, post, 1), 1)
+  elseif settings.seqL == 0 and settings.seqR > 0 then
+    post = post:repeatTensor(settings.seqR, 1)  
+    return torch.cat(refs, post, 1)
+  elseif settings.seqL > 0 and settings.seqR == 0 then
+    pre = pre:repeatTensor(settings.seqL, 1)
+    return torch.cat(pre, refs, 1)
+  end
+  
+  return refs
   
 end
 
 
 
 -- function cloning borders - references
-function fillValueBordersRefs(refs, val) 
+function fillValueBordersRefs(refs, value) 
   
-  local curOut = torch.Tensor(refs:size(1) + settings.seqL + settings.seqR)  
+  local pre, post
   
-  for i = 1, settings.seqL, 1 do
-    curOut[i] = val
-  end  
-  for i = settings.seqL + 1, curOut:size(1) - settings.seqR - settings.seqL, 1 do
-    curOut[i] = refs[i]
-  end  
-  for i = curOut:size(1) - settings.seqR - settings.seqL + 1, curOut:size(1) - settings.seqL, 1 do
-    curOut[i] = val
-  end    
+  -- fill borders
+  if settings.seqL > 0 and settings.seqR > 0 then
+    pre = torch.Tensor(settings.seqL):zero() + value
+    post = torch.Tensor(settings.seqR):zero() + value
+    return torch.cat(pre, torch.cat(refs, post, 1), 1)
+  elseif settings.seqL == 0 and settings.seqR > 0 then
+    post = torch.Tensor(settings.seqR):zero() + value 
+    return torch.cat(refs, post, 1)
+  elseif settings.seqL > 0 and settings.seqR == 0 then
+    pre = torch.Tensor(settings.seqL):zero() + value
+    return torch.cat(pre, refs, 1)
+  end
 
-  return curOut
+  return refs
   
 end
 
