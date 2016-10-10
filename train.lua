@@ -89,7 +89,7 @@ if settings.packageCount > 1 then
 end
   
 -- initialize logs
-local flog = logroll.file_logger(settings.outputFolder .. settings.logFolder .. '/train.log')
+local flog = logroll.file_logger(settings.outputFolder .. settings.logFolder .. '/train-' .. settings.lists[1] .. '.log')
 local plog = logroll.print_logger()
 local log = logroll.combine(flog, plog)
   
@@ -220,7 +220,7 @@ for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
         -- retrieve data for selected frame, fill input arrays for training       
         local ret = sets[1][index]
         inputs[i] = ret.inp
-        targets[i] = ret.out
+        targets[i] = ret.out     
 
       end
     
@@ -283,7 +283,7 @@ for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
   for i = 2, #settings.lists, 1 do
     
     -- open file for saving confusion matrix info
-    if settings.confusionMatrixInfo == 1 then
+    if settings.confusionMatrixInfo == 1 and settings.noEpochs == epoch then
       io.output(settings.outputFolder .. settings.statsFolder .. "/conf-" .. settings.lists[i] .. "-" .. epoch .. ".stats")
     end
     
@@ -332,7 +332,7 @@ for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
       all = all + batchSize     
       
       -- save confusion matrix info
-      if settings.confusionMatrixInfo == 1 then
+      if settings.confusionMatrixInfo == 1 and settings.noEpochs == epoch then
         for k = 1, batchSize, 1 do
           io.write(torch.totable(mx[k])[1], ";", targets[k], "\n")
         end
@@ -340,7 +340,7 @@ for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
     end
     
     -- close confusion matrix info file
-    if settings.confusionMatrixInfo == 1 then
+    if settings.confusionMatrixInfo == 1 and settings.noEpochs == epoch then
       io.flush()
       io.close()
     end
