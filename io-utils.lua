@@ -15,7 +15,7 @@ function readFilelist(filelist)
   io.input(file)
   
   -- if view -> skip the info line
-  if settings.inputView > 0 then
+  if settings.inputView == 1 or settings.inputView == 2 then
     local info = io.read()
   end  
   
@@ -230,12 +230,12 @@ function readViewV3(file, prepareRefs)
   end
   
   for i = 4, #line, step do
-    table.insert(fvec, tonumber(line[i]))
-        
+    table.insert(fvec, tonumber(line[i]) + 1)
+
     for c in line[i+1]:gmatch"." do
       table.insert(fvec, tonumber(c))
     end
-    
+
     if step == 3 then
       table.insert(viewRefs, tonumber(line[i+2]))
     end
