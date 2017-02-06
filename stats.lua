@@ -58,9 +58,10 @@ function Stats(list)
   stats.std:div(stats.nSamples)
   stats.std:add(-torch.pow(stats.mean, 2))
   stats.std:sqrt()
-  stats.mean = stats.mean:float()
-  stats.std = stats.std:float()
-  
+  local rand = (torch.rand(settings.inputSize) * 1e-15):double()
+  stats.mean = (stats.mean+rand):float()
+  stats.std = (stats.std+rand):float()
+
   -- log time needed for computation
   log.info('Mean and variance completed in ' .. sys.clock() - begin)
 
