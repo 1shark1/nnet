@@ -1,5 +1,5 @@
 
--- LM -- DNN Training -- 5/10/16 --
+-- LM -- DNN Training -- 6/2/17 --
 
 
 
@@ -14,7 +14,7 @@ require 'logroll'
 require 'gnuplot'
 
 -- require settings
-local setts = 'settings-test'
+local setts = 'settings'
 if arg[1] then 
   setts = string.gsub(arg[1], ".lua", "")
 end
@@ -26,7 +26,7 @@ torch.manualSeed(1)
 torch.setdefaulttensortype('torch.FloatTensor')
 
 -- initialize settings
-settings = Settings()  
+settings = Settings() 
   
 -- add path to scripts
 if settings.scriptFolder then  
@@ -56,11 +56,18 @@ saveStats(settings.mean, settings.std)
 
 -- prepare train set
 local sets = {}
-if settings.packageCount == 1 then        -- 1 package -> data to RAM
-  table.insert(sets, Dataset(settings.listFolder .. settings.lists[1], true, true))
-  
-  -- save framestats to files
-  saveFramestats(sets[1].framestats)
+if settings.packageCount <= 1 then        -- 0 or 1 packages - load data to RAM
+  if settings.loadPackage == 1 then
+    table.insert(sets, Dataset(settings.outputFolder .. settings.packageFolder .. "pckg1.list", true, false, true, false))
+  elseif settings.savePackage == 1 then
+    os.execute("mkdir -p " .. settings.outputFolder .. settings.packageFolder)
+    os.execute("th save-pckg.lua " .. setts)
+    table.insert(sets, Dataset(settings.outputFolder .. settings.packageFolder .. "pckg1.list", true, false, true, false))
+  else
+    table.insert(sets, Dataset(settings.listFolder .. settings.lists[1], true, true))
+    settings.packageCount = 1
+    saveFramestats(sets[1].framestats)
+  end  
 elseif settings.packageCount > 1 then     -- more packages -> load data during training
   os.execute("mkdir -p " .. settings.outputFolder .. settings.packageFolder)
   table.insert(sets, -1)
@@ -77,15 +84,6 @@ end
 -- prepare other lists
 for i = 2, #settings.lists, 1 do
   table.insert(sets, Dataset(settings.listFolder .. settings.lists[i], true, false))
-end
-
--- fix settings for training of packages (properties already applied to packages)
-if settings.packageCount > 1 then 
-  if settings.savePackage == 1 or settings.loadPackage == 1 then
-    settings.applyCMS = 0   
-    settings.cloneBorders = 0  
-    settings.dnnAlign = 0 
-  end
 end
   
 -- initialize logs
@@ -284,7 +282,7 @@ for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
     
     -- open file for saving confusion matrix info
     if settings.confusionMatrixInfo == 1 and settings.noEpochs == epoch then
-      io.output(settings.outputFolder .. settings.statsFolder .. "/conf-" .. settings.lists[i] .. "-" .. epoch .. ".stats")
+      io.output(settings.outputFolder .. settings.logFolder .. "/conf-" .. settings.lists[i] .. "-" .. epoch .. ".stats")
     end
     
     -- initialize evaluation
@@ -311,7 +309,7 @@ for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
         inputs[k] = ret.inp
         targets[k] = ret.out
       end
-  
+
       -- cuda neccessities
       if settings.cuda == 1 then
         inputs = inputs:cuda()
@@ -319,12 +317,12 @@ for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
 
       -- forward pass
       local outputs = model:forward(inputs)
-
+    
       -- cuda neccessities
       if settings.cuda == 1 then
         outputs = outputs:typeAs(targets)
       end         
-  
+
       -- frame error evaluation
       local _, mx = outputs:max(2)       
       mx = mx:typeAs(targets)      
@@ -353,7 +351,7 @@ for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
 
   -- draw frame error rate graph
   if settings.drawERRs == 1 then
-    gnuplot.pngfigure(settings.outputFolder .. settings.statsFolder .. '/errs.png')
+    gnuplot.pngfigure(settings.outputFolder .. settings.statsFolder .. '/errs-' .. settings.lists[1] .. '.png')
     if #settings.lists - 1 == 1 then 
       gnuplot.plot({settings.lists[2], torch.Tensor(errorTable[1]), '-'})
     elseif #settings.lists - 1 == 2 then 
@@ -369,5 +367,3 @@ for epoch = settings.startEpoch + 1, settings.noEpochs, 1 do
     gnuplot.plotflush()
   end
 end
-
-
