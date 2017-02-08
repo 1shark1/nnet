@@ -1,5 +1,5 @@
 
--- LM -- DNN Training -- 6/2/17 --
+-- LM -- DNN Training -- 5/10/16 --
 
 
 
@@ -60,8 +60,11 @@ if settings.packageCount <= 1 then        -- 0 or 1 packages - load data to RAM
   if settings.loadPackage == 1 then
     table.insert(sets, Dataset(settings.outputFolder .. settings.packageFolder .. "pckg1.list", true, false, true, false))
   elseif settings.savePackage == 1 then
-    os.execute("mkdir -p " .. settings.outputFolder .. settings.packageFolder)
-    os.execute("th save-pckg.lua " .. setts)
+    if settings.scriptFolder then
+      os.execute("th " .. settings.scriptFolder .. "save-pckg.lua " .. setts)
+    else
+      os.execute("th save-pckg.lua " .. setts)
+    end
     table.insert(sets, Dataset(settings.outputFolder .. settings.packageFolder .. "pckg1.list", true, false, true, false))
   else
     table.insert(sets, Dataset(settings.listFolder .. settings.lists[1], true, true))
