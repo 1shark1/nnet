@@ -1,5 +1,5 @@
 
--- LM -- DNN Training -- 5/10/16 --
+-- LM -- DNN Training
 
 
 

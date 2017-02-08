@@ -1,5 +1,5 @@
 
--- LM -- DNN Decoding -- 11/8/16 --
+-- LM -- DNN Decoding
 
 
 

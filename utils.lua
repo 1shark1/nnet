@@ -1,5 +1,5 @@
 
--- LM -- Utils -- 3/8/16 --
+-- LM -- Utils
 
 
 
@@ -71,4 +71,5 @@ function shuffleTable(t)
 		t[i], t[j] = t[j], t[i]
 	end
 end
+
 

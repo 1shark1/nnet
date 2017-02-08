@@ -1,5 +1,5 @@
 
--- LM -- Settings -- 6/2/17 --
+-- LM -- Settings
 
 
 
@@ -54,7 +54,7 @@ function Settings(decode)
   settings.cuda = 1
   settings.packageCount = 0                         -- create packages for large datasets
   if settings.packageCount > 0 then
-    settings.loadPackage = 1                        -- option to load previously saved packages (higher priority than savePackage)
+    settings.loadPackage = 0                        -- option to load previously saved packages (higher priority than savePackage)
     settings.savePackage = 1                        -- save packages to files
   end
   settings.shuffle = 1                              -- shuffle training data, on/off
@@ -76,6 +76,7 @@ function Settings(decode)
   settings.listFolder = "lists/"
   settings.lists = {'cz-cz48-train.list', 'cz-cz48-test.list', 'cz-cz48-valid.list'}    -- lists, first for training, the rest for evaluation
   settings.modelName = "MODEL"
+  settings.scriptFolder = "./"
   settings.outputFolder = "/data/nnModels/" .. settings.modelName
   settings.statsFolder = "/stats/"
   settings.logFolder = "/log/"

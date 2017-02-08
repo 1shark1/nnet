@@ -1,5 +1,5 @@
 
--- LM -- Stats/Dataset Utils -- 5/10/16 --
+-- LM -- Stats/Dataset Utils
 
 
 
@@ -45,7 +45,7 @@ end
 -- function filling borders of input
 function fillBordersInputs(fvec)
   
-  -- switch to correct fill of boarders (inputs)
+  -- switch to correct fill of borders (inputs)
   if settings.cloneBorders == 1 then
     return cloneBordersInputs(fvec)
   elseif settings.cloneBorders == 2 then

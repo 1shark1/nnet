@@ -1,5 +1,5 @@
 
--- LM -- DNN Utils -- 3/8/16 --
+-- LM -- DNN Utils
 
 
 

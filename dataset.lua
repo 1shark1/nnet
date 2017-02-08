@@ -1,5 +1,5 @@
 
--- LM -- Dataset -- 5/10/16 --
+-- LM -- Dataset
 
 
 
@@ -117,7 +117,7 @@ function Dataset(list, isFilelist, computeFramestats, loadPackageData, savePacka
         -- store data to memory
         fvec = fvec:view(fvec:size(1) * settings.inputSize)
         table.insert(dataset.cache, {inp = fvec, out = references})
-      
+
       end
     end
     
@@ -206,7 +206,7 @@ function Dataset(list, isFilelist, computeFramestats, loadPackageData, savePacka
     local out
     if not decode then
       out = (self.cache[fileid].out[self.index.pos[i]] + 1)
-    end
+    end   
     
     -- return the asked data
     return {inp = inp, out = out}
