@@ -85,7 +85,7 @@ function buildResidualModel()
       mlpA:add(nn.BatchNormalization(settings.noNeurons))
       mlpA:add(getAF())   
     end
-    mlpA:add(nn.initializeLL(settings.noNeurons, settings.noNeurons))
+    mlpA:add(initializeLL(settings.noNeurons, settings.noNeurons))
     mlpA:add(nn.BatchNormalization(settings.noNeurons))
   
     mlpB = nn.Identity()
